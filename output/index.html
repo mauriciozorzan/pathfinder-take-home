@@ -1,0 +1,318 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Exact Item AI Viewer</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 24px;
+      color: #1f2937;
+    }
+    .controls {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    input, select {
+      padding: 8px;
+      font-size: 14px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td {
+      border: 1px solid #d1d5db;
+      padding: 8px;
+      vertical-align: top;
+      text-align: left;
+    }
+    th {
+      background: #f3f4f6;
+      position: sticky;
+      top: 0;
+    }
+    .th-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 130px;
+    }
+    .th-label {
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .th-select {
+      width: 100%;
+      font-size: 12px;
+      padding: 4px;
+      box-sizing: border-box;
+    }
+    .summary {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .card {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 12px 16px;
+      min-width: 160px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Exact Item AI Viewer</h1>
+  <p>Filter predictions by dataset, status, route, or free-text search.</p>
+
+  <div class="summary">
+    <div class="card"><strong>Datasets</strong><br>2</div>
+    <div class="card"><strong>Total Items</strong><br>92</div>
+    <div class="card"><strong>Resolved</strong><br>60</div>
+    <div class="card"><strong>Abstained</strong><br>32</div>
+  </div>
+
+  <div class="controls">
+    <input id="search" placeholder="Search merchant or item name">
+    <select id="dataset">
+      <option value="">All datasets</option>
+      <option value="photo_anchored">photo_anchored</option>
+      <option value="unanchored">unanchored</option>
+    </select>
+    <select id="status">
+      <option value="">All statuses</option>
+      <option value="resolved">resolved</option>
+      <option value="ambiguous">ambiguous</option>
+      <option value="insufficient_evidence">insufficient_evidence</option>
+    </select>
+    <select id="route">
+      <option value="">All routes</option>
+      <option value="deterministic">deterministic</option>
+      <option value="retrieval_needed">retrieval_needed</option>
+      <option value="photo_assisted">photo_assisted</option>
+      <option value="insufficient_evidence">insufficient_evidence</option>
+    </select>
+  </div>
+
+  <table id="results">
+    <thead>
+      <tr>
+        <th>Dataset</th>
+        <th>Status</th>
+        <th>Route</th>
+        <th>Confidence</th>
+        <th>Merchant</th>
+        <th>Input Item</th>
+        <th>Resolved Title</th>
+        <th>Condition</th>
+        <th>Total Latency Ms</th>
+        <th>Local Only</th>
+        <th>Photo Tried</th>
+        <th>Photo Success</th>
+        <th>Photo Changed</th>
+        <th>Photo Delta</th>
+        <th>Photo Confidence</th>
+        <th>Photo Summary</th>
+        <th>Photo Candidate Specific</th>
+        <th>Sent To Adjudication</th>
+        <th>Photo Block Reason</th>
+        <th>Adjudication</th>
+        <th>Contradiction</th>
+        <th>Adjudication Rationale</th>
+        <th>Receipt Context</th>
+        <th>Sibling Context</th>
+        <th>Sibling Similarity</th>
+        <th>Sibling Family</th>
+        <th>Sibling Changed Status</th>
+        <th>Shared Photo</th>
+        <th>Receipt Assignment</th>
+        <th>Receipt Assignment Confidence</th>
+        <th>Receipt Notes</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>photo_anchored</td><td>resolved</td><td>deterministic</td><td>0.72</td><td>Amazon</td><td>Tara Toys Minecraft Pixel Art</td><td>Tara Toys Minecraft Pixel Art</td><td></td><td>2.91</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>photo_anchored</td><td>resolved</td><td>deterministic</td><td>0.90</td><td>Barnes &amp; Noble Booksellers #2211</td><td>Wavelength by Alex Hague, Justin Vickers</td><td>Wavelength by Alex Hague, Justin Vickers</td><td></td><td>0.43</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>photo_anchored</td><td>resolved</td><td>deterministic</td><td>0.72</td><td>Covenant Home School Resource Center</td><td>MBHH What a Character! Notable Lives from History: America&#x27;s Famous Spies</td><td>MBHH What a Character! Notable Lives from History: America&#x27;s Famous Spies</td><td></td><td>1458.36</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>photo_anchored</td><td>resolved</td><td>deterministic</td><td>0.72</td><td>Covenant Home School Resource Center</td><td>MBHH What a Character! Extraordinary Animal Heroes</td><td>MBHH What a Character! Extraordinary Animal Heroes</td><td></td><td>1458.33</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>photo_anchored</td><td>resolved</td><td>photo_assisted</td><td>0.78</td><td>Covenant Home School Resource Center</td><td>Used Curriculum and Books</td><td>My Book of Mazes Animals</td><td></td><td>1458.32</td><td>no</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>yes</td><td>no</td><td></td><td>no</td><td>no</td><td>yes</td><td>shared_photo_leftover_generic_line</td><td>0.78</td><td>One coherent leftover visible candidate explained a generic receipt line.</td><td></td></tr><tr><td>photo_anchored</td><td>insufficient_evidence</td><td>insufficient_evidence</td><td>0.12</td><td>Covenant Home School Resource Center</td><td>Used Curriculum and Books</td><td></td><td></td><td>1458.32</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td>Title is category-level and there is not enough metadata to identify one exact item.</td></tr><tr><td>photo_anchored</td><td>insufficient_evidence</td><td>insufficient_evidence</td><td>0.12</td><td>COVENANT HOME SCHOOL RESOURCE CENTER</td><td>Used Curriculum and Books</td><td></td><td></td><td>0.17</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td>Title is category-level and there is not enough metadata to identify one exact item.</td></tr><tr><td>photo_anchored</td><td>insufficient_evidence</td><td>insufficient_evidence</td><td>0.12</td><td>COVENANT HOME SCHOOL RESOURCE CENTER</td><td>Used Curriculum and Books</td><td></td><td></td><td>0.17</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td>Title is category-level and there is not enough metadata to identify one exact item.</td></tr><tr><td>photo_anchored</td><td>insufficient_evidence</td><td>insufficient_evidence</td><td>0.12</td><td>COVENANT HOME SCHOOL RESOURCE CENTER</td><td>Used Curriculum and Books</td><td></td><td></td><td>0.17</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td>Title is category-level and there is not enough metadata to identify one exact item.</td></tr><tr><td>photo_anchored</td><td>insufficient_evidence</td><td>insufficient_evidence</td><td>0.12</td><td>COVENANT HOME SCHOOL RESOURCE CENTER</td><td>Used Curriculum and Books</td><td></td><td></td><td>0.17</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td>Title is category-level and there is not enough metadata to identify one exact item.</td></tr><tr><td>photo_anchored</td><td>insufficient_evidence</td><td>insufficient_evidence</td><td>0.12</td><td>COVENANT HOME SCHOOL RESOURCE CENTER</td><td>Used Curriculum and Books</td><td></td><td></td><td>0.17</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td>Title is category-level and there is not enough metadata to identify one exact item.</td></tr><tr><td>photo_anchored</td><td>resolved</td><td>photo_assisted</td><td>0.90</td><td>Fry&#x27;s Food Stores</td><td>LG UNICORN CAKE</td><td>LEGO Friends Unicorn Cake Delivery Car</td><td></td><td>11131.69</td><td>no</td><td>yes</td><td>yes</td><td>yes</td><td>0.46</td><td>0.90</td><td>visible title: Unicorn Cake Delivery Car; type: Building Toy; brand/author: LEGO; The item matches the description and theme of the parsed receipt line item.</td><td>yes</td><td>yes</td><td></td><td>use_photo_result</td><td>none</td><td>The photo evidence provides a clear and specific title that aligns with the receipt&#x27;s theme, indicating that the items likely refer to the same product.</td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>photo_anchored</td><td>insufficient_evidence</td><td>insufficient_evidence</td><td>0.15</td><td>Goodwill of Central &amp; Northern Arizona</td><td>Misc</td><td></td><td></td><td>0.97</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td>Title is category-level and there is not enough metadata to identify one exact item.</td></tr><tr><td>photo_anchored</td><td>insufficient_evidence</td><td>insufficient_evidence</td><td>0.15</td><td>Goodwill of Central &amp; Northern Arizona</td><td>Misc</td><td></td><td></td><td>0.94</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td>Title is category-level and there is not enough metadata to identify one exact item.</td></tr><tr><td>photo_anchored</td><td>insufficient_evidence</td><td>insufficient_evidence</td><td>0.15</td><td>Goodwill of Central &amp; Northern Arizona</td><td>Misc</td><td></td><td></td><td>0.93</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td>Title is category-level and there is not enough metadata to identify one exact item.</td></tr><tr><td>photo_anchored</td><td>insufficient_evidence</td><td>insufficient_evidence</td><td>0.15</td><td>Goodwill of Central &amp; Northern Arizona</td><td>Misc</td><td></td><td></td><td>0.92</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td>Title is category-level and there is not enough metadata to identify one exact item.</td></tr><tr><td>photo_anchored</td><td>insufficient_evidence</td><td>insufficient_evidence</td><td>0.15</td><td>Goodwill of Central &amp; Northern Arizona</td><td>Books</td><td></td><td></td><td>0.12</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td>Title is category-level and there is not enough metadata to identify one exact item.</td></tr><tr><td>photo_anchored</td><td>insufficient_evidence</td><td>insufficient_evidence</td><td>0.15</td><td>Goodwill of Central &amp; Northern Arizona</td><td>Books</td><td></td><td></td><td>0.12</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td>Title is category-level and there is not enough metadata to identify one exact item.</td></tr><tr><td>photo_anchored</td><td>insufficient_evidence</td><td>insufficient_evidence</td><td>0.15</td><td>Goodwill of Central &amp; Northern Arizona</td><td>Books</td><td></td><td></td><td>0.12</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td>Title is category-level and there is not enough metadata to identify one exact item.</td></tr><tr><td>photo_anchored</td><td>insufficient_evidence</td><td>insufficient_evidence</td><td>0.15</td><td>Goodwill of Central &amp; Northern Arizona</td><td>Books</td><td></td><td></td><td>0.12</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td>Title is category-level and there is not enough metadata to identify one exact item.</td></tr><tr><td>photo_anchored</td><td>insufficient_evidence</td><td>insufficient_evidence</td><td>0.12</td><td>Hobby Lobby</td><td>Easter - Easter 40% ($8.99 - $3.60) 2 @ 5.39 each</td><td></td><td></td><td>0.24</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td>Receipt line looks like a department or discount summary, not an exact item.</td></tr><tr><td>photo_anchored</td><td>insufficient_evidence</td><td>insufficient_evidence</td><td>0.12</td><td>Hobby Lobby</td><td>Spring - Spring Shop 40% ($79.99 - $32.00)</td><td></td><td></td><td>0.14</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td>Receipt line looks like a department or discount summary, not an exact item.</td></tr><tr><td>photo_anchored</td><td>insufficient_evidence</td><td>insufficient_evidence</td><td>0.12</td><td>Hobby Lobby</td><td>Spring - Spring Shop 40% ($13.99 - $5.60) 3 @ 8.39 each</td><td></td><td></td><td>0.14</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td>Receipt line looks like a department or discount summary, not an exact item.</td></tr><tr><td>photo_anchored</td><td>insufficient_evidence</td><td>insufficient_evidence</td><td>0.12</td><td>Hobby Lobby</td><td>Spring - Spring Shop 40% ($16.99 - $6.80)</td><td></td><td></td><td>0.13</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td>Receipt line looks like a department or discount summary, not an exact item.</td></tr><tr><td>photo_anchored</td><td>insufficient_evidence</td><td>insufficient_evidence</td><td>0.12</td><td>Hobby Lobby</td><td>Easter - Easter 40% ($3.49 - $1.40)</td><td></td><td></td><td>0.13</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td>Receipt line looks like a department or discount summary, not an exact item.</td></tr><tr><td>photo_anchored</td><td>insufficient_evidence</td><td>insufficient_evidence</td><td>0.12</td><td>Hobby Lobby</td><td>Easter - Easter 40% ($2.99 - $1.20) 2 @ 1.79 each</td><td></td><td></td><td>0.13</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td>Receipt line looks like a department or discount summary, not an exact item.</td></tr><tr><td>photo_anchored</td><td>insufficient_evidence</td><td>insufficient_evidence</td><td>0.12</td><td>Hobby Lobby</td><td>Easter - Easter 40% ($3.49 - $1.40)</td><td></td><td></td><td>0.13</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td>Receipt line looks like a department or discount summary, not an exact item.</td></tr><tr><td>photo_anchored</td><td>insufficient_evidence</td><td>insufficient_evidence</td><td>0.12</td><td>Hobby Lobby</td><td>Easter - Easter 40% ($1.99 - $0.80)</td><td></td><td></td><td>0.13</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td>Receipt line looks like a department or discount summary, not an exact item.</td></tr><tr><td>photo_anchored</td><td>insufficient_evidence</td><td>insufficient_evidence</td><td>0.15</td><td>Hobby Lobby</td><td>Crafts</td><td></td><td></td><td>0.12</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td>Title is category-level and there is not enough metadata to identify one exact item.</td></tr><tr><td>photo_anchored</td><td>insufficient_evidence</td><td>insufficient_evidence</td><td>0.15</td><td>Hobby Lobby</td><td>Crafts</td><td></td><td></td><td>0.12</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td>Title is category-level and there is not enough metadata to identify one exact item.</td></tr><tr><td>photo_anchored</td><td>insufficient_evidence</td><td>insufficient_evidence</td><td>0.15</td><td>Hobby Lobby</td><td>Crafts</td><td></td><td></td><td>0.12</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td>Title is category-level and there is not enough metadata to identify one exact item.</td></tr><tr><td>photo_anchored</td><td>insufficient_evidence</td><td>insufficient_evidence</td><td>0.12</td><td>Hobby Lobby</td><td>Easter - Easter 40% ($1.99 - $0.80) 2 @ 1.19 each</td><td></td><td></td><td>0.13</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td>Receipt line looks like a department or discount summary, not an exact item.</td></tr><tr><td>photo_anchored</td><td>insufficient_evidence</td><td>insufficient_evidence</td><td>0.12</td><td>Hobby Lobby</td><td>Easter - Easter 40% ($2.99 - $1.20)</td><td></td><td></td><td>0.13</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td>Receipt line looks like a department or discount summary, not an exact item.</td></tr><tr><td>photo_anchored</td><td>insufficient_evidence</td><td>insufficient_evidence</td><td>0.12</td><td>Hobby Lobby</td><td>Easter - Easter 40% ($4.99 - $2.00)</td><td></td><td></td><td>0.13</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td>Receipt line looks like a department or discount summary, not an exact item.</td></tr><tr><td>photo_anchored</td><td>insufficient_evidence</td><td>insufficient_evidence</td><td>0.15</td><td>Hobby Lobby</td><td>Toys &amp; Hobbies</td><td></td><td></td><td>0.12</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td>Title is category-level and there is not enough metadata to identify one exact item.</td></tr><tr><td>photo_anchored</td><td>insufficient_evidence</td><td>insufficient_evidence</td><td>0.12</td><td>Hobby Lobby</td><td>Easter - Easter 40% ($7.99 - $3.20) 2 @ 4.79 each</td><td></td><td></td><td>0.14</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td>Receipt line looks like a department or discount summary, not an exact item.</td></tr><tr><td>photo_anchored</td><td>insufficient_evidence</td><td>insufficient_evidence</td><td>0.12</td><td>Hobby Lobby</td><td>Easter - Easter 40% ($4.99 - $2.00)</td><td></td><td></td><td>0.14</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td>Receipt line looks like a department or discount summary, not an exact item.</td></tr><tr><td>photo_anchored</td><td>resolved</td><td>photo_assisted</td><td>0.90</td><td>Walmart</td><td>KA12GLPNS</td><td>kingart Gel Pens - Glitter Colors</td><td></td><td>9679.87</td><td>no</td><td>yes</td><td>yes</td><td>yes</td><td>0.49</td><td>0.90</td><td>visible title: kingart Gel Pens 12; type: gel pens; brand/author: kingart; The item matches the structured context and the image clearly shows the product.</td><td>yes</td><td>yes</td><td></td><td>use_photo_result</td><td>none</td><td>The photo evidence provides a clear and specific identification of the product, which aligns well with the receipt&#x27;s shorthand item name.</td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>photo_anchored</td><td>resolved</td><td>photo_assisted</td><td>0.90</td><td>Walmart</td><td>KA10 TT PEN</td><td>Kingart Twin-Tip Metallic Pens - 10 Pack</td><td></td><td>13766.34</td><td>no</td><td>yes</td><td>yes</td><td>yes</td><td>0.44</td><td>0.90</td><td>visible title: Twin-Tip Metallic Pens; type: Writing Instrument; brand/author: Kingart; The item name from the structured context does not match exactly with the visible product, but the product type and brand align closely.</td><td>yes</td><td>yes</td><td></td><td>refine_existing_result</td><td>none</td><td>The photo evidence suggests a specific product that aligns with the general category of the receipt item, but does not match exactly. The brand and type are consistent, making it a plausible refinement.</td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>photo_anchored</td><td>resolved</td><td>deterministic</td><td>0.80</td><td>Walmart</td><td>COYOTE SCRAM</td><td>COYOTE SCRAM</td><td></td><td>0.30</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>photo_anchored</td><td>resolved</td><td>photo_assisted</td><td>0.90</td><td>Walmart</td><td>MINECRAFT SW</td><td>Minecraft Smartwatch</td><td></td><td>9822.65</td><td>no</td><td>yes</td><td>yes</td><td>yes</td><td>0.43</td><td>0.90</td><td>visible title: MINECRAFT SMARTWATCH; type: Smartwatch; brand/author: Mojang Studios; The item matches the structured context and image details closely.</td><td>yes</td><td>yes</td><td></td><td>use_photo_result</td><td>none</td><td>The photo evidence clearly shows a product that matches the receipt context, with strong branding and a specific title that explains the abbreviated receipt item. The high confidence in the photo evidence supports resolving to the more specific product.</td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>photo_anchored</td><td>resolved</td><td>deterministic</td><td>0.72</td><td>ZERO FOLLOWERS LLC</td><td>7 ft by 3 ft by 2 ft - Cedar Raised Garden Bed Planter - with bottom and pressure treated corner posts and top frame included (* this is the second garden bed order)</td><td>7 ft by 3 ft by 2 ft - Cedar Raised Garden Bed Planter - with bottom and pressure treated corner posts and top frame included (* this is the second garden bed order)</td><td></td><td>0.33</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>photo_anchored</td><td>resolved</td><td>deterministic</td><td>0.72</td><td>MJ DESIGNS USA</td><td>6 ft by 3 ft by 2 ft - Cedar Raised Garden Bed Planter - with bottom and pressure treated corner posts and top frame included</td><td>6 ft by 3 ft by 2 ft - Cedar Raised Garden Bed Planter - with bottom and pressure treated corner posts and top frame included</td><td></td><td>0.22</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>photo_anchored</td><td>resolved</td><td>photo_assisted</td><td>0.90</td><td>Walmart</td><td>SITE MERCH</td><td>STARSIDE</td><td></td><td>9154.84</td><td>no</td><td>yes</td><td>yes</td><td>yes</td><td>0.41</td><td>0.90</td><td>visible title: STARSIDE; type: book; brand/author: Alex Aster; The item matches the structured context and the image provides clear identification.</td><td>yes</td><td>yes</td><td></td><td>use_photo_result</td><td>none</td><td>The photo evidence provides clear identification of the item as a book titled &#x27;STARSIDE&#x27; by Alex Aster, which is a plausible refinement of the receipt text &#x27;SITE MERCH&#x27;. The visible title and author name, along with the context of the Walmart Book Club, strongly support the resolution.</td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>photo_anchored</td><td>resolved</td><td>photo_assisted</td><td>0.90</td><td>Walmart</td><td>WARD D PAPE</td><td>WARD D</td><td></td><td>8064.77</td><td>no</td><td>yes</td><td>yes</td><td>yes</td><td>0.41</td><td>0.90</td><td>visible title: WARD D; type: Book; brand/author: Freida McFadden; The item context and image confirm the book title and author.</td><td>yes</td><td>yes</td><td></td><td>use_photo_result</td><td>none</td><td>The photo-derived title &#x27;WARD D&#x27; directly matches the visible title in the image and is a plausible refinement of the receipt text &#x27;WARD D PAPE&#x27;, which likely abbreviates the full title and author.</td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>unanchored</td><td>resolved</td><td>deterministic</td><td>0.68</td><td>Amazon</td><td>Pastel Smarkers - Washable Patented Gourmet Scented Pastel Markers, Assorted Colors, Standard Point Felt Tip, 16 Count</td><td>Pastel Smarkers - Washable Patented Gourmet Scented Pastel Markers, Assorted Colors, Standard Point Felt Tip, 16 Count</td><td></td><td>0.38</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>unanchored</td><td>resolved</td><td>deterministic</td><td>0.68</td><td>Amazon</td><td>Melissa &amp; Doug Created by Me! Monster Truck Wooden Craft Kit - Easter Basket Stuffers Easy To Assemble DIY For Kids</td><td>Melissa &amp; Doug Created by Me! Monster Truck Wooden Craft Kit - Easter Basket Stuffers Easy To Assemble DIY For Kids</td><td></td><td>0.22</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>unanchored</td><td>resolved</td><td>deterministic</td><td>0.63</td><td>Amazon</td><td>The Rabbit Listened</td><td>The Rabbit Listened</td><td></td><td>0.20</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>unanchored</td><td>resolved</td><td>deterministic</td><td>0.89</td><td>Home Science Tools</td><td>Owl Pellet Dissection Kit</td><td>Owl Pellet Dissection Kit</td><td></td><td>0.20</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>unanchored</td><td>resolved</td><td>deterministic</td><td>0.94</td><td>Home Science Tools</td><td>Owl Pellets for Dissection, Large (1.5&quot;+)</td><td>Owl Pellets for Dissection, Large (1.5&quot;+)</td><td></td><td>0.18</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>unanchored</td><td>resolved</td><td>deterministic</td><td>0.86</td><td>Bambu Lab</td><td>PLA Matte - Matte Scarlet Red / Filament with spool / 1kg</td><td>PLA Matte - Matte Scarlet Red / Filament with spool / 1kg</td><td></td><td>0.16</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>unanchored</td><td>resolved</td><td>deterministic</td><td>0.86</td><td>Bambu Lab</td><td>PLA Matte - Matte Marine Blue / Filament with spool / 1kg</td><td>PLA Matte - Matte Marine Blue / Filament with spool / 1kg</td><td></td><td>0.16</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>unanchored</td><td>resolved</td><td>deterministic</td><td>0.86</td><td>Bambu Lab</td><td>PLA Matte - Matte Ash Gray / Filament with spool / 1kg</td><td>PLA Matte - Matte Ash Gray / Filament with spool / 1kg</td><td></td><td>0.16</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>unanchored</td><td>resolved</td><td>deterministic</td><td>0.86</td><td>Bambu Lab</td><td>PLA Matte - Matte Ivory White / Filament with spool / 1kg</td><td>PLA Matte - Matte Ivory White / Filament with spool / 1kg</td><td></td><td>0.15</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>unanchored</td><td>resolved</td><td>deterministic</td><td>0.86</td><td>Bambu Lab</td><td>PLA Matte - Matte Charcoal / Filament with spool / 1kg</td><td>PLA Matte - Matte Charcoal / Filament with spool / 1kg</td><td></td><td>0.16</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>unanchored</td><td>resolved</td><td>deterministic</td><td>0.86</td><td>Bambu Lab</td><td>PLA Basic - Cocoa Brown / Filament with spool / 1kg</td><td>PLA Basic - Cocoa Brown / Filament with spool / 1kg</td><td></td><td>0.12</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>unanchored</td><td>resolved</td><td>deterministic</td><td>0.86</td><td>Bambu Lab</td><td>PLA Basic - Gray / Filament with spool / 1kg</td><td>PLA Basic - Gray / Filament with spool / 1kg</td><td></td><td>0.12</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>unanchored</td><td>resolved</td><td>deterministic</td><td>0.86</td><td>Bambu Lab</td><td>PLA Basic - Blue / Filament with spool / 1kg</td><td>PLA Basic - Blue / Filament with spool / 1kg</td><td></td><td>0.12</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>unanchored</td><td>resolved</td><td>deterministic</td><td>0.86</td><td>Bambu Lab</td><td>PLA Basic - Jade White / Filament with spool / 1kg</td><td>PLA Basic - Jade White / Filament with spool / 1kg</td><td></td><td>0.12</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>unanchored</td><td>resolved</td><td>deterministic</td><td>0.63</td><td>Bambu Lab</td><td>Bambu Lab P2S - P2S Combo (Pre-sale, Ship around Apr.10, 2026)</td><td>Bambu Lab P2S - P2S Combo</td><td></td><td>0.15</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>unanchored</td><td>resolved</td><td>deterministic</td><td>0.86</td><td>LEGO</td><td>FIFA World Cup™ Official Trophy</td><td>FIFA World Cup™ Official Trophy</td><td></td><td>0.41</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>unanchored</td><td>resolved</td><td>deterministic</td><td>0.78</td><td>LEGO</td><td>Soccer Ball</td><td>Soccer Ball</td><td></td><td>0.12</td><td>no</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>yes</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td>catalog_context_promotion</td><td>0.78</td><td>Catalog-like receipt context supported local resolution for this named item.; Most receipt lines have item IDs.; Most receipt lines look like named catalog titles.; Sibling item IDs use similar formats.</td><td></td></tr><tr><td>unanchored</td><td>resolved</td><td>deterministic</td><td>0.81</td><td>LEGO</td><td>2026 U.S. Soccer National Team Jersey</td><td>2026 U.S. Soccer National Team Jersey</td><td></td><td>0.12</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>unanchored</td><td>resolved</td><td>deterministic</td><td>0.86</td><td>LEGO</td><td>FIFA World Cup 2026™ Official Emblem</td><td>FIFA World Cup 2026™ Official Emblem</td><td></td><td>0.12</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>unanchored</td><td>resolved</td><td>deterministic</td><td>0.58</td><td>ThriftBooks</td><td>Salamandastron - Very Good condition</td><td>Salamandastron</td><td>Very Good</td><td>0.13</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>unanchored</td><td>resolved</td><td>deterministic</td><td>0.63</td><td>ThriftBooks</td><td>Mattimeo: A Tale From Redwall - Very Good condition</td><td>Mattimeo: A Tale From Redwall</td><td>Very Good</td><td>0.12</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>unanchored</td><td>resolved</td><td>deterministic</td><td>0.58</td><td>ThriftBooks</td><td>Mariel of Redwall - Very Good condition</td><td>Mariel of Redwall</td><td>Very Good</td><td>0.12</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>unanchored</td><td>resolved</td><td>deterministic</td><td>0.63</td><td>ThriftBooks</td><td>Mossflower: A Tale of Redwall - Good condition</td><td>Mossflower: A Tale of Redwall</td><td>Good</td><td>0.11</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>unanchored</td><td>ambiguous</td><td>retrieval_needed</td><td>0.46</td><td>Target</td><td>Eight Ball Helmet</td><td></td><td></td><td>971.04</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td>Available evidence suggests a plausible item family, but not enough specificity for a confident exact-item match.</td></tr><tr><td>unanchored</td><td>resolved</td><td>deterministic</td><td>0.68</td><td>Target</td><td>Bell Indy Adult Bike Helmet</td><td>Bell Indy Adult Bike Helmet</td><td></td><td>971.01</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>unanchored</td><td>resolved</td><td>deterministic</td><td>0.63</td><td>Target</td><td>Little Tikes Adventure Rocket</td><td>Little Tikes Adventure Rocket</td><td></td><td>0.60</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>unanchored</td><td>resolved</td><td>deterministic</td><td>0.68</td><td>Walmart</td><td>Hammermill Printer 20 lb., Copy Paper 8.5&quot; x 11&quot;, 10 Ream, 5,000 Sheets, White - 150010</td><td>Hammermill Printer 20 lb., Copy Paper 8.5&quot; x 11&quot;, 10 Ream, 5,000 Sheets, White - 150010</td><td></td><td>0.32</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>unanchored</td><td>resolved</td><td>deterministic</td><td>0.81</td><td>The Good and the Beautiful</td><td>Answer Key: Math 5</td><td>Answer Key: Math 5</td><td></td><td>0.18</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>unanchored</td><td>resolved</td><td>deterministic</td><td>0.81</td><td>The Good and the Beautiful</td><td>Course Book: Math 5</td><td>Course Book: Math 5</td><td></td><td>0.17</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>unanchored</td><td>resolved</td><td>deterministic</td><td>0.81</td><td>The Good and the Beautiful</td><td>Mental Math Map Mysteries: Math 5</td><td>Mental Math Map Mysteries: Math 5</td><td></td><td>0.20</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>unanchored</td><td>resolved</td><td>deterministic</td><td>0.86</td><td>The Good and the Beautiful</td><td>Course Book Part 2: Level 5 Language Arts</td><td>Course Book Part 2: Level 5 Language Arts</td><td></td><td>0.24</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>unanchored</td><td>resolved</td><td>deterministic</td><td>0.86</td><td>The Good and the Beautiful</td><td>Answer Key: Level 5 Language Arts</td><td>Answer Key: Level 5 Language Arts</td><td></td><td>0.16</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>unanchored</td><td>resolved</td><td>deterministic</td><td>0.86</td><td>The Good and the Beautiful</td><td>Course Book Part 1: Level 5 Language Arts</td><td>Course Book Part 1: Level 5 Language Arts</td><td></td><td>0.16</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>unanchored</td><td>resolved</td><td>deterministic</td><td>0.81</td><td>The Good and the Beautiful</td><td>Mystery of the Crying Caves</td><td>Mystery of the Crying Caves</td><td></td><td>0.20</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>unanchored</td><td>resolved</td><td>deterministic</td><td>0.78</td><td>The Good and the Beautiful</td><td>Ice Storm</td><td>Ice Storm</td><td></td><td>0.15</td><td>no</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>yes</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td>catalog_context_promotion</td><td>0.78</td><td>Catalog-like receipt context supported local resolution for this named item.; Most receipt lines have item IDs.; Most receipt lines look like named catalog titles.; Sibling titles share curriculum/book/product structure.; Sibling item IDs use similar formats.</td><td></td></tr><tr><td>unanchored</td><td>resolved</td><td>deterministic</td><td>0.86</td><td>The Good and the Beautiful</td><td>The Clockmaker&#x27;s Son: by Jenny Phillips</td><td>The Clockmaker&#x27;s Son: by Jenny Phillips</td><td></td><td>0.16</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>unanchored</td><td>resolved</td><td>deterministic</td><td>0.81</td><td>The Good and the Beautiful</td><td>The Legend of Windhollow</td><td>The Legend of Windhollow</td><td></td><td>0.18</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>unanchored</td><td>resolved</td><td>deterministic</td><td>0.76</td><td>The Good and the Beautiful</td><td>A Trickle of Water</td><td>A Trickle of Water</td><td></td><td>0.18</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>unanchored</td><td>resolved</td><td>deterministic</td><td>0.81</td><td>The Good and the Beautiful</td><td>Quick Reference Guide</td><td>Quick Reference Guide</td><td></td><td>0.17</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>unanchored</td><td>resolved</td><td>deterministic</td><td>0.81</td><td>The Good and the Beautiful</td><td>Handwriting Workbook: Level 5</td><td>Handwriting Workbook: Level 5</td><td></td><td>0.17</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>unanchored</td><td>resolved</td><td>deterministic</td><td>0.86</td><td>Veritas Press</td><td>Omnibus III Self Paced Complete Kit</td><td>Omnibus III Self Paced Complete Kit</td><td></td><td>0.49</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>unanchored</td><td>resolved</td><td>deterministic</td><td>0.86</td><td>Rainbow Resource Center</td><td>Flip Book Kits - Bible Tales</td><td>Flip Book Kits - Bible Tales</td><td></td><td>0.29</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>unanchored</td><td>resolved</td><td>deterministic</td><td>0.86</td><td>TPT</td><td>Fractions Unit: Activities for Whole, Halves, Thirds, and Fourths. Total Price reflects $0.90 off for your first purchas</td><td>Fractions Unit: Activities for Whole, Halves, Thirds, and Fourths. Total Price reflects $0.90 off for your first purchas</td><td></td><td>0.29</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>unanchored</td><td>resolved</td><td>deterministic</td><td>0.84</td><td>StraighterLine</td><td>Membership - Monthly</td><td>Membership - Monthly</td><td></td><td>0.20</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>unanchored</td><td>resolved</td><td>deterministic</td><td>0.68</td><td>Arizona Science Center</td><td>Homeschool 3-5: Dream &amp; Design - Child (3-17) Workshop - Date: Tue May 19, 2026</td><td>Homeschool 3-5: Dream &amp; Design - Child (3-17) Workshop - Date: Tue May 19, 2026</td><td></td><td>0.23</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>unanchored</td><td>resolved</td><td>deterministic</td><td>0.89</td><td>CrunchLabs</td><td>Disc Launcher - Flywheel</td><td>Disc Launcher - Flywheel</td><td></td><td>0.15</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr><tr><td>unanchored</td><td>resolved</td><td>deterministic</td><td>0.86</td><td>CrunchLabs</td><td>Build Box Subscription - Pay Annually</td><td>Build Box Subscription - Pay Annually</td><td></td><td>0.15</td><td>yes</td><td>no</td><td>no</td><td>no</td><td>0.00</td><td></td><td></td><td>no</td><td>no</td><td></td><td></td><td>none</td><td></td><td>no</td><td>no</td><td></td><td>no</td><td>no</td><td>no</td><td></td><td></td><td></td><td></td></tr>
+    </tbody>
+  </table>
+
+  <script>
+    const search = document.getElementById("search");
+    const dataset = document.getElementById("dataset");
+    const status = document.getElementById("status");
+    const route = document.getElementById("route");
+    const table = document.getElementById("results");
+    const tbody = table.querySelector("tbody");
+    const rows = Array.from(tbody.querySelectorAll("tr"));
+    const headers = Array.from(table.querySelectorAll("thead th"));
+    const rowData = rows.map((row, index) => ({
+      row,
+      index,
+      cells: Array.from(row.querySelectorAll("td")).map((cell) => cell.textContent.trim()),
+    }));
+    const blankToken = "__BLANK__";
+    const columnFilters = new Map();
+    let sortColumnIndex = null;
+    let sortDirection = "";
+
+    function isNumeric(value) {
+      return value !== "" && !Number.isNaN(Number(value));
+    }
+
+    function compareValues(left, right) {
+      if (isNumeric(left) && isNumeric(right)) {
+        return Number(left) - Number(right);
+      }
+      return left.localeCompare(right, undefined, { sensitivity: "base" });
+    }
+
+    function createOption(value, label) {
+      const option = document.createElement("option");
+      option.value = value;
+      option.textContent = label;
+      return option;
+    }
+
+    function buildColumnControls() {
+      for (const [index, header] of headers.entries()) {
+        const labelText = header.textContent.trim();
+        header.textContent = "";
+
+        const wrapper = document.createElement("div");
+        wrapper.className = "th-controls";
+
+        const label = document.createElement("div");
+        label.className = "th-label";
+        label.textContent = labelText;
+
+        const sortSelect = document.createElement("select");
+        sortSelect.className = "th-select";
+        sortSelect.title = `Sort ${labelText}`;
+        sortSelect.appendChild(createOption("", "Sort"));
+        sortSelect.appendChild(createOption("asc", "Sort A-Z / low-high"));
+        sortSelect.appendChild(createOption("desc", "Sort Z-A / high-low"));
+        sortSelect.addEventListener("change", () => {
+          sortColumnIndex = sortSelect.value ? index : null;
+          sortDirection = sortSelect.value;
+          if (sortColumnIndex !== null) {
+            for (const otherHeader of headers) {
+              if (otherHeader === header) {
+                continue;
+              }
+              const otherSortSelect = otherHeader.querySelector("select[data-kind='sort']");
+              if (otherSortSelect) {
+                otherSortSelect.value = "";
+              }
+            }
+          }
+          applyFilters();
+        });
+        sortSelect.dataset.kind = "sort";
+
+        const filterSelect = document.createElement("select");
+        filterSelect.className = "th-select";
+        filterSelect.title = `Filter ${labelText}`;
+        filterSelect.appendChild(createOption("", "All values"));
+
+        const values = Array.from(
+          new Set(rowData.map((item) => item.cells[index] ?? ""))
+        ).sort((a, b) => compareValues(a, b));
+        for (const value of values) {
+          if (value === "") {
+            filterSelect.appendChild(createOption(blankToken, "(blank)"));
+          } else {
+            filterSelect.appendChild(createOption(value, value));
+          }
+        }
+        filterSelect.addEventListener("change", () => {
+          if (!filterSelect.value) {
+            columnFilters.delete(index);
+          } else {
+            columnFilters.set(index, filterSelect.value);
+          }
+          applyFilters();
+        });
+
+        wrapper.appendChild(label);
+        wrapper.appendChild(sortSelect);
+        wrapper.appendChild(filterSelect);
+        header.appendChild(wrapper);
+      }
+    }
+
+    function applyFilters() {
+      const searchText = search.value.toLowerCase();
+      const visible = [];
+      const hidden = [];
+
+      for (const item of rowData) {
+        const rowDataset = item.cells[0] ?? "";
+        const rowStatus = item.cells[1] ?? "";
+        const rowRoute = item.cells[2] ?? "";
+        const haystack = item.cells.join(" ").toLowerCase();
+
+        let matches =
+          (!dataset.value || rowDataset === dataset.value) &&
+          (!status.value || rowStatus === status.value) &&
+          (!route.value || rowRoute === route.value) &&
+          (!searchText || haystack.includes(searchText));
+
+        if (matches) {
+          for (const [columnIndex, expected] of columnFilters.entries()) {
+            const value = item.cells[columnIndex] ?? "";
+            if (expected === blankToken) {
+              if (value !== "") {
+                matches = false;
+                break;
+              }
+            } else if (value !== expected) {
+              matches = false;
+              break;
+            }
+          }
+        }
+
+        if (matches) {
+          visible.push(item);
+        } else {
+          hidden.push(item);
+        }
+      }
+
+      if (sortColumnIndex !== null && sortDirection) {
+        visible.sort((left, right) => {
+          const comparison = compareValues(
+            left.cells[sortColumnIndex] ?? "",
+            right.cells[sortColumnIndex] ?? "",
+          );
+          if (comparison !== 0) {
+            return sortDirection === "asc" ? comparison : -comparison;
+          }
+          return left.index - right.index;
+        });
+      }
+
+      for (const item of visible) {
+        item.row.style.display = "";
+        tbody.appendChild(item.row);
+      }
+      for (const item of hidden) {
+        item.row.style.display = "none";
+        tbody.appendChild(item.row);
+      }
+    }
+
+    buildColumnControls();
+    for (const control of [search, dataset, status, route]) {
+      control.addEventListener("input", applyFilters);
+      control.addEventListener("change", applyFilters);
+    }
+    applyFilters();
+  </script>
+</body>
+</html>
