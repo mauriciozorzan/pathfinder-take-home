@@ -1,3 +1,10 @@
+"""Item-level resolution logic for turning normalized receipt lines into results.
+
+The resolver is intentionally text-first and conservative. It resolves strong
+local candidates, abstains on weak evidence, and only lets photo/model evidence
+change an answer after explicit gating and adjudication.
+"""
+
 from __future__ import annotations
 
 import time
@@ -19,6 +26,8 @@ from .score import (
 
 @dataclass(slots=True)
 class Candidate:
+    """Internal local candidate built from receipt text and structured signals."""
+
     title: str
     description: str
     entity_type: str
@@ -27,6 +36,8 @@ class Candidate:
 
 
 class ExactItemResolver:
+    """Resolve individual receipt items using local, photo, and adjudicated evidence."""
+
     def __init__(
         self,
         *,
@@ -34,14 +45,20 @@ class ExactItemResolver:
         adjudicator: EvidenceAdjudicator | None = None,
         enable_photo_assist: bool = True,
     ) -> None:
+        """Create a resolver with injectable analyzers for production or tests."""
+
         self.enable_photo_assist = enable_photo_assist
         self.photo_analyzer = photo_analyzer if photo_analyzer is not None else create_default_photo_analyzer()
         self.adjudicator = adjudicator if adjudicator is not None else create_default_adjudicator()
 
     def resolve_batch(self, items: Iterable[ReceiptItem]) -> List[ResolutionResult]:
+        """Resolve a sequence of normalized receipt items in input order."""
+
         return [self.resolve_item(item) for item in items]
 
     def resolve_item(self, item: ReceiptItem) -> ResolutionResult:
+        """Resolve one item through routing, local candidate generation, and optional photo assistance."""
+
         total_start = time.perf_counter()
         latency = ItemLatencyMetrics()
         routing_start = time.perf_counter()
@@ -52,11 +69,15 @@ class ExactItemResolver:
         latency.local_resolution_ms = round((time.perf_counter() - local_start) * 1000, 2)
 
         if route.bucket == "insufficient_evidence":
+            # Weak/discount/category-only lines stay as explicit abstentions.
             result = self._insufficient_result(item, route.reason)
             result = self._attach_photo_metadata(result, item, attempted=False, photo_evidence=None)
             return self._finalize_latency(result, latency, total_start)
 
         if route.bucket == "photo_assisted":
+            # Photo-assisted items may still have enough local signal to produce
+            # a tentative result, but low-confidence cases are sent to the photo
+            # gate before they can become exact matches.
             if local_candidate and item.specificity_score >= 0.72:
                 result = self._resolved_result(item, route.bucket, route.reason, local_candidate)
             else:
@@ -77,12 +98,16 @@ class ExactItemResolver:
             return self._finalize_latency(result, latency, total_start)
 
         if local_candidate and self._should_resolve_without_retrieval(item, local_candidate, route.bucket):
+            # Strong local candidates are resolved without external retrieval or
+            # model calls. Any available photo is recorded as metadata only.
             result = self._resolved_result(item, route.bucket, route.reason, local_candidate)
             result = self._relabel_local_resolution_if_needed(result, route, local_candidate)
             result = self._attach_photo_metadata(result, item, attempted=False, photo_evidence=None)
             return self._finalize_latency(result, latency, total_start)
 
         if route.bucket == "retrieval_needed":
+            # Retrieval is not implemented in this prototype, so these remain
+            # ambiguous unless the optional photo path can add enough evidence.
             result = self._ambiguous_result(
                 item,
                 route.bucket,
@@ -117,6 +142,8 @@ class ExactItemResolver:
         base_result: ResolutionResult,
         latency: ItemLatencyMetrics,
     ) -> ResolutionResult:
+        """Run the photo analyzer only when the routing and confidence gates allow it."""
+
         should_attempt = self._should_attempt_photo_analysis(
             item,
             route_bucket=route_bucket,
@@ -150,6 +177,8 @@ class ExactItemResolver:
         route_bucket: str,
         base_result: ResolutionResult,
     ) -> bool:
+        """Gate photo analysis to low-confidence cases with actual image evidence."""
+
         if not self.enable_photo_assist:
             return False
         if not item.reference_photo_urls:
@@ -168,6 +197,8 @@ class ExactItemResolver:
         latency: ItemLatencyMetrics,
         total_start: float,
     ) -> ResolutionResult:
+        """Attach total timing and final path-usage flags to a result copy."""
+
         latency.total_item_ms = round((time.perf_counter() - total_start) * 1000, 2)
         return replace(
             result,
@@ -196,6 +227,8 @@ class ExactItemResolver:
         photo_evidence: PhotoEvidence,
         latency: ItemLatencyMetrics,
     ) -> ResolutionResult:
+        """Attach photo evidence and, when warranted, send it to adjudication."""
+
         result = self._attach_photo_metadata(
             base_result,
             item,
@@ -223,6 +256,8 @@ class ExactItemResolver:
             photo_adjudication_block_reason=None if should_adjudicate else block_reason,
         )
         if not should_adjudicate:
+            # Photo evidence that is weak or non-specific is preserved for
+            # inspection but cannot update the item identity.
             return result
 
         adjudication_start = time.perf_counter()
@@ -243,6 +278,8 @@ class ExactItemResolver:
         photo_evidence: PhotoEvidence,
         adjudication: AdjudicationResult,
     ) -> ResolutionResult:
+        """Apply a structured adjudicator decision to the current result."""
+
         updated_title = result.resolved_title
         updated_description = result.resolved_description
         updated_entity_type = result.resolved_entity_type
@@ -257,6 +294,8 @@ class ExactItemResolver:
         )
 
         if adjudication.success and not strong_contradiction:
+            # The adjudicator can either replace an ambiguous text result with a
+            # photo-derived identity or refine an existing candidate.
             can_use_photo = adjudication.should_use_photo_result or adjudication.should_refine_existing_result
             if can_use_photo and adjudication.final_confidence >= 0.5:
                 updated_title = adjudication.adjudicated_title or updated_title
@@ -269,6 +308,8 @@ class ExactItemResolver:
 
             strong_photo_refinement = self._is_strong_photo_refinement(photo_evidence, adjudication)
             if strong_photo_refinement and updated_title:
+                # Strong visual grounding plus explicit adjudicator support is
+                # enough to promote the item to resolved.
                 updated_status = "resolved"
                 updated_confidence = max(
                     updated_confidence,
@@ -278,6 +319,8 @@ class ExactItemResolver:
                 used_photo = True
 
             if updated_status == "resolved" and (
+                # Guardrail: if the model did not provide strong enough support,
+                # keep the item ambiguous instead of accepting a fragile match.
                 not strong_photo_refinement
                 and (
                     not (
@@ -365,6 +408,8 @@ class ExactItemResolver:
         current_result: ResolutionResult,
         photo_evidence: PhotoEvidence,
     ) -> tuple[bool, str | None]:
+        """Decide whether a photo result is specific enough to ask the adjudicator about."""
+
         if current_result.adjudication_contradiction_detected and current_result.adjudication_contradiction_strength == "strong":
             return False, "A strong contradiction was already established before photo adjudication."
         if current_result.status == "resolved" and current_result.confidence >= 0.72:
@@ -378,6 +423,8 @@ class ExactItemResolver:
         return False, "Photo result did not contain a sufficiently specific high-confidence candidate."
 
     def _is_specific_photo_candidate(self, photo_evidence: PhotoEvidence) -> bool:
+        """Check whether photo output has enough confidence and visual grounding."""
+
         title = photo_evidence.model_suggested_title or photo_evidence.suggested_title
         if not title:
             return False
@@ -396,6 +443,8 @@ class ExactItemResolver:
         photo_evidence: PhotoEvidence,
         adjudication: AdjudicationResult,
     ) -> bool:
+        """Return whether adjudicated photo evidence can safely force resolution."""
+
         if adjudication.contradiction_detected and adjudication.contradiction_strength == "strong":
             return False
         if not adjudication.plausible_refinement or not adjudication.image_as_high_weight_evidence:
@@ -419,6 +468,8 @@ class ExactItemResolver:
         candidate: Candidate,
         route_bucket: str,
     ) -> bool:
+        """Decide whether a local candidate is strong enough without lookup."""
+
         if route_bucket == "deterministic":
             return True
         if route_bucket == "photo_assisted":
@@ -443,6 +494,8 @@ class ExactItemResolver:
         route: RouteDecision,
         candidate: Candidate,
     ) -> ResolutionResult:
+        """Mark locally resolved retrieval-needed items as deterministic in output."""
+
         if route.bucket != "retrieval_needed":
             return result
         if result.status != "resolved":
@@ -467,6 +520,8 @@ class ExactItemResolver:
         return replace(result, route="deterministic", evidence=evidence)
 
     def _retrieval_needed_note(self, item: ReceiptItem, route: RouteDecision) -> str:
+        """Explain why an item with some signal still needs stronger evidence."""
+
         if item.has_reference_photo:
             return (
                 "The available text suggests a plausible item, but additional external or "
@@ -490,6 +545,8 @@ class ExactItemResolver:
         return "The current evidence is not specific enough to support a confident exact-item identification."
 
     def _looks_abbreviated_or_truncated(self, item: ReceiptItem) -> bool:
+        """Detect receipt shorthand made mostly of very short tokens."""
+
         tokens = item.normalized_item_name.split()
         if not tokens:
             return False
@@ -497,11 +554,14 @@ class ExactItemResolver:
         return any(len(token) == 1 for token in tokens) or short_token_count >= max(2, len(tokens) - 1)
 
     def _candidate_from_text(self, item: ReceiptItem) -> Optional[Candidate]:
+        """Build the best local candidate available from normalized text."""
+
         title = item.cleaned_item_name or item.item_name
         if item.is_generic_title or item.looks_like_discount_line:
             return None
 
         if item.id_type == "isbn13":
+            # ISBNs are strong identity evidence when paired with a usable title.
             return Candidate(
                 title=title,
                 description="Likely book resolved from a specific title with ISBN-backed evidence.",
@@ -561,6 +621,8 @@ class ExactItemResolver:
         return None
 
     def _is_high_specificity_product_title(self, item: ReceiptItem) -> bool:
+        """Identify titles that are structured enough to stand alone locally."""
+
         if item.is_generic_title or item.looks_like_discount_line:
             return False
         title = item.cleaned_item_name or item.item_name
@@ -585,6 +647,8 @@ class ExactItemResolver:
         )
 
     def _looks_like_book(self, item: ReceiptItem) -> bool:
+        """Return whether merchant and title signals resemble a book/curriculum item."""
+
         merchant = item.normalized_merchant
         title = item.normalized_item_name
         lowered_title = item.cleaned_item_name.lower()
@@ -607,10 +671,14 @@ class ExactItemResolver:
         )
 
     def _looks_like_service(self, item: ReceiptItem) -> bool:
+        """Return whether the title looks like a service or course offering."""
+
         title = item.normalized_item_name
         return any(keyword in title for keyword in {"workshop", "class", "course", "program"})
 
     def _looks_like_subscription(self, item: ReceiptItem) -> bool:
+        """Return whether the title looks like a recurring subscription/membership."""
+
         title = item.normalized_item_name
         return any(keyword in title for keyword in {"subscription", "membership", "annually", "monthly"})
 
@@ -621,6 +689,8 @@ class ExactItemResolver:
         route_reason: str,
         candidate: Candidate,
     ) -> ResolutionResult:
+        """Create a resolved result from a local candidate."""
+
         confidence = deterministic_confidence(item, uses_item_id=candidate.uses_item_id)
         return ResolutionResult(
             dataset_name=item.dataset_name,
@@ -656,6 +726,8 @@ class ExactItemResolver:
         route_reason: str,
         note: str,
     ) -> ResolutionResult:
+        """Create an ambiguous result that preserves why more evidence is needed."""
+
         return ResolutionResult(
             dataset_name=item.dataset_name,
             receipt_index=item.receipt_index,
@@ -689,6 +761,8 @@ class ExactItemResolver:
         note: str,
         route_bucket: str = "insufficient_evidence",
     ) -> ResolutionResult:
+        """Create an insufficient-evidence abstention result."""
+
         return ResolutionResult(
             dataset_name=item.dataset_name,
             receipt_index=item.receipt_index,
@@ -724,6 +798,8 @@ class ExactItemResolver:
         attempted: bool,
         photo_evidence: PhotoEvidence | None,
     ) -> ResolutionResult:
+        """Return a result copy with photo-analysis metadata populated."""
+
         success = photo_evidence.success if photo_evidence is not None else False
         used = photo_evidence.used if photo_evidence is not None else False
         summary = photo_evidence.summary if photo_evidence is not None else None

@@ -1,3 +1,11 @@
+"""Optional photo-analysis support for anchored receipt items.
+
+The default behavior is safe and local: without environment configuration the
+pipeline only records whether a photo source is reachable. When enabled, the AI
+path fetches the reference image, asks for structured visual evidence, and
+returns data that the resolver still must adjudicate before using.
+"""
+
 from __future__ import annotations
 
 import base64
@@ -126,6 +134,8 @@ class PhotoAIConfig:
 
     @classmethod
     def from_env(cls) -> "PhotoAIConfig":
+        """Build photo-AI settings from environment variables and an optional .env file."""
+
         env_file_values = _load_env_file(Path.cwd() / ".env")
         return cls(
             enabled=_env_bool("PHOTO_AI_ENABLED", default=False, env_file_values=env_file_values),
@@ -158,10 +168,14 @@ class AIBasedPhotoAnalyzer:
         self.last_external_api_call_count = 0
 
     def analyze(self, image_source: str, item_context: ReceiptItem) -> PhotoEvidence:
+        """Fetch and analyze a photo, failing closed whenever configuration or evidence is weak."""
+
         self.last_photo_fetch_ms = 0.0
         self.last_photo_model_ms = 0.0
         self.last_external_api_call_count = 0
         if not self.config.enabled:
+            # Missing or disabled config returns non-mutating evidence instead of
+            # raising, so local pipeline runs stay deterministic.
             return self._disabled("PHOTO_AI_ENABLED is not true.")
         if self.config.provider != "openai":
             return self._disabled(f"Unsupported PHOTO_AI_PROVIDER: {self.config.provider}.")
@@ -207,6 +221,8 @@ class AIBasedPhotoAnalyzer:
             )
 
     def _disabled(self, note: str) -> PhotoEvidence:
+        """Return a standard no-op evidence object for unavailable AI analysis."""
+
         return PhotoEvidence(
             used=False,
             success=False,
@@ -218,6 +234,8 @@ class AIBasedPhotoAnalyzer:
         )
 
     def _call_openai_vision(self, image_bytes: bytes, mime_type: str, item_context: ReceiptItem) -> dict[str, Any]:
+        """Send the encoded image and receipt context to the configured vision model."""
+
         image_b64 = base64.b64encode(image_bytes).decode("ascii")
         data_url = f"data:{mime_type};base64,{image_b64}"
         prompt = build_photo_analysis_prompt(item_context)
@@ -252,6 +270,8 @@ class AIBasedPhotoAnalyzer:
         return json.loads(content)
 
     def _evidence_from_model_payload(self, payload: dict[str, Any]) -> PhotoEvidence:
+        """Normalize the model JSON response into the resolver's evidence contract."""
+
         model_confidence = _coerce_float(payload.get("confidence"), default=0.0)
         sufficient = bool(payload.get("is_sufficient_for_exact_identification")) and model_confidence >= 0.72
         suggested_title = _string_or_none(payload.get("suggested_title"))
@@ -305,8 +325,12 @@ def fetch_image_bytes(
     timeout_seconds: float,
     max_image_bytes: int,
 ) -> ImageFetchResult:
+    """Load a remote or local image while enforcing size and MIME-type limits."""
+
     parsed = urlparse(image_source)
     if parsed.scheme in {"http", "https"}:
+        # Remote image reads are capped so an unexpected large response cannot
+        # dominate latency or memory usage.
         try:
             request = Request(image_source, headers={"User-Agent": "exact-item-ai/0.1"})
             with urlopen(request, timeout=timeout_seconds) as response:
@@ -332,6 +356,8 @@ def fetch_image_bytes(
 
 
 def build_photo_analysis_prompt(item_context: ReceiptItem) -> str:
+    """Build the vision-model prompt for exact-item photo evidence extraction."""
+
     return f"""You are helping identify the exact product represented by a parsed receipt line item.
 
 Use the image as secondary evidence together with the structured item context.
@@ -362,6 +388,8 @@ Only set is_sufficient_for_exact_identification=true when the image and context 
 
 
 def _load_env_file(path: Path) -> dict[str, str]:
+    """Read simple KEY=VALUE lines from a local .env file."""
+
     if not path.exists():
         return {}
     values: dict[str, str] = {}
@@ -375,10 +403,14 @@ def _load_env_file(path: Path) -> dict[str, str]:
 
 
 def _config_value(name: str, default: str, env_file_values: dict[str, str]) -> str:
+    """Return an environment value, then .env value, then a default."""
+
     return os.getenv(name) or env_file_values.get(name) or default
 
 
 def _env_bool(name: str, *, default: bool, env_file_values: dict[str, str]) -> bool:
+    """Parse a boolean configuration value."""
+
     raw = os.getenv(name) or env_file_values.get(name)
     if raw is None:
         return default
@@ -386,6 +418,8 @@ def _env_bool(name: str, *, default: bool, env_file_values: dict[str, str]) -> b
 
 
 def _env_int(name: str, *, default: int, env_file_values: dict[str, str]) -> int:
+    """Parse an integer configuration value with a safe default."""
+
     raw = os.getenv(name) or env_file_values.get(name)
     if raw is None:
         return default
@@ -396,6 +430,8 @@ def _env_int(name: str, *, default: int, env_file_values: dict[str, str]) -> int
 
 
 def _env_optional_int(name: str, *, env_file_values: dict[str, str]) -> int | None:
+    """Parse an optional integer configuration value."""
+
     raw = os.getenv(name) or env_file_values.get(name)
     if raw in (None, ""):
         return None
@@ -406,6 +442,8 @@ def _env_optional_int(name: str, *, env_file_values: dict[str, str]) -> int | No
 
 
 def _env_float(name: str, *, default: float, env_file_values: dict[str, str]) -> float:
+    """Parse a float configuration value with a safe default."""
+
     raw = os.getenv(name) or env_file_values.get(name)
     if raw is None:
         return default
@@ -416,6 +454,8 @@ def _env_float(name: str, *, default: float, env_file_values: dict[str, str]) ->
 
 
 def _coerce_float(value: Any, *, default: float) -> float:
+    """Convert model-returned numeric values to floats."""
+
     try:
         return float(value)
     except (TypeError, ValueError):
@@ -423,6 +463,8 @@ def _coerce_float(value: Any, *, default: float) -> float:
 
 
 def _string_or_none(value: Any) -> str | None:
+    """Normalize arbitrary model fields into optional strings."""
+
     if value is None:
         return None
     text = str(value).strip()
@@ -430,12 +472,16 @@ def _string_or_none(value: Any) -> str | None:
 
 
 def _list_of_strings(value: Any) -> list[str]:
+    """Normalize arbitrary model fields into a clean string list."""
+
     if not isinstance(value, list):
         return []
     return [str(item).strip() for item in value if str(item).strip()]
 
 
 def _build_summary_from_payload(payload: dict[str, Any]) -> str:
+    """Create a readable one-line summary from visual evidence fields."""
+
     pieces = []
     visible_title = _string_or_none(payload.get("visible_title"))
     product_type = _string_or_none(payload.get("product_type"))

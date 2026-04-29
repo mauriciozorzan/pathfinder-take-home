@@ -1,3 +1,5 @@
+"""Input/output helpers for receipt datasets and generated predictions."""
+
 from __future__ import annotations
 
 import json
@@ -9,6 +11,8 @@ from .normalize import parse_price
 
 
 def load_receipt_items(dataset_path: str | Path, dataset_name: str) -> List[ReceiptItem]:
+    """Load a take-home receipt JSON file and flatten it into item records."""
+
     path = Path(dataset_path)
     payload = json.loads(path.read_text())
     receipts = payload.get("receipts", [])
@@ -37,12 +41,16 @@ def load_receipt_items(dataset_path: str | Path, dataset_name: str) -> List[Rece
 
 
 def ensure_directory(path: str | Path) -> Path:
+    """Create an output directory if it does not already exist."""
+
     directory = Path(path)
     directory.mkdir(parents=True, exist_ok=True)
     return directory
 
 
 def write_results(path: str | Path, results: Iterable[ResolutionResult]) -> Path:
+    """Write item-level predictions as pretty-printed JSON."""
+
     output_path = Path(path)
     ensure_directory(output_path.parent)
     serialized = [result.to_dict() for result in results]
@@ -51,6 +59,8 @@ def write_results(path: str | Path, results: Iterable[ResolutionResult]) -> Path
 
 
 def write_text(path: str | Path, content: str) -> Path:
+    """Write a text artifact, creating the parent output directory first."""
+
     output_path = Path(path)
     ensure_directory(output_path.parent)
     output_path.write_text(content)

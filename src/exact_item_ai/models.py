@@ -1,19 +1,31 @@
+"""Shared data contracts for the exact-item resolution pipeline.
+
+The rest of the package passes these dataclasses between stages instead of
+loose dictionaries. That keeps normalization, routing, AI assistance,
+receipt-level context, latency reporting, and JSON output aligned on one schema.
+"""
+
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
 from typing import Any, Dict, List, Literal, Optional
 
+# Route buckets describe the next action the resolver should take for an item.
 RouteBucket = Literal[
     "deterministic",
     "retrieval_needed",
     "photo_assisted",
     "insufficient_evidence",
 ]
+# Resolution status is intentionally conservative: unresolved items remain
+# explicit abstentions instead of being forced into weak matches.
 ResolutionStatus = Literal["resolved", "ambiguous", "insufficient_evidence"]
 
 
 @dataclass(slots=True)
 class ItemLatencyMetrics:
+    """Stage-level timing captured for each individual receipt line."""
+
     normalization_ms: float = 0.0
     routing_ms: float = 0.0
     local_resolution_ms: float = 0.0
@@ -27,6 +39,8 @@ class ItemLatencyMetrics:
 
 @dataclass(slots=True)
 class ReceiptLatencyMetrics:
+    """Aggregate timing and path-usage metrics for one receipt."""
+
     dataset_name: str
     receipt_index: int
     total_receipt_ms: float
@@ -44,6 +58,8 @@ class ReceiptLatencyMetrics:
 
 @dataclass(slots=True)
 class ReceiptItem:
+    """One flattened receipt line plus normalized signals used downstream."""
+
     dataset_name: str
     receipt_index: int
     item_index: int
@@ -67,20 +83,28 @@ class ReceiptItem:
     normalization_notes: List[str] = field(default_factory=list)
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize the item for JSON output or debugging."""
+
         return asdict(self)
 
 
 @dataclass(slots=True)
 class RouteDecision:
+    """The resolver route selected for an item and the human-readable reason."""
+
     bucket: RouteBucket
     reason: str
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize the route decision for evidence payloads."""
+
         return asdict(self)
 
 
 @dataclass(slots=True)
 class ResolutionResult:
+    """Final item-level prediction plus evidence, AI metadata, and latency."""
+
     dataset_name: str
     receipt_index: int
     item_index: int
@@ -143,6 +167,8 @@ class ResolutionResult:
     used_shared_photo_assignment: bool = False
 
     def to_dict(self) -> Dict[str, Any]:
+        """Serialize predictions while hiding the internal entity-type field."""
+
         payload = asdict(self)
         payload.pop("resolved_entity_type", None)
         return payload

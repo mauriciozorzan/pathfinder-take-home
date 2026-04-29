@@ -1,3 +1,5 @@
+"""Model-backed reconciliation between text-first and photo-derived evidence."""
+
 from __future__ import annotations
 
 import json
@@ -93,6 +95,8 @@ class AIBasedEvidenceAdjudicator:
     """
 
     def __init__(self, config: PhotoAIConfig | None = None) -> None:
+        """Create an adjudicator using explicit or environment-backed AI config."""
+
         self.config = config if config is not None else PhotoAIConfig.from_env()
 
     def adjudicate(
@@ -101,7 +105,11 @@ class AIBasedEvidenceAdjudicator:
         current_result: ResolutionResult,
         photo_evidence: PhotoEvidence,
     ) -> AdjudicationResult:
+        """Ask the configured model whether photo evidence should change the result."""
+
         if not self.config.enabled:
+            # The adjudicator is fail-closed: if AI is unavailable, preserve the
+            # current text-first result and mark adjudication as unsuccessful.
             return self._disabled(current_result, "PHOTO_AI_ENABLED is not true.")
         if self.config.provider != "openai":
             return self._disabled(current_result, f"Unsupported PHOTO_AI_PROVIDER: {self.config.provider}.")
@@ -115,6 +123,8 @@ class AIBasedEvidenceAdjudicator:
             return self._disabled(current_result, f"Evidence adjudicator failed: {exc!s}")
 
     def _disabled(self, current_result: ResolutionResult, note: str) -> AdjudicationResult:
+        """Return an adjudication result that leaves the current prediction unchanged."""
+
         return AdjudicationResult(
             should_use_photo_result=False,
             should_refine_existing_result=False,
@@ -143,6 +153,8 @@ class AIBasedEvidenceAdjudicator:
         current_result: ResolutionResult,
         photo_evidence: PhotoEvidence,
     ) -> dict[str, Any]:
+        """Send structured receipt, result, and photo evidence to the model."""
+
         payload = {
             "model": self.config.model,
             "response_format": {"type": "json_object"},
@@ -175,6 +187,8 @@ class AIBasedEvidenceAdjudicator:
         payload: dict[str, Any],
         current_result: ResolutionResult,
     ) -> AdjudicationResult:
+        """Validate and coerce model JSON into an adjudication result."""
+
         final_status = _status_or_default(payload.get("final_status"), current_result.status)
         decision = _decision_or_default(payload.get("decision"))
         final_confidence = clamp_confidence(_coerce_float(payload.get("final_confidence"), current_result.confidence))
@@ -188,6 +202,8 @@ class AIBasedEvidenceAdjudicator:
         supports_exact_resolution = bool(payload.get("supports_exact_resolution"))
 
         if contradiction and contradiction_strength == "strong":
+            # Strong contradictions block photo usage even if other model fields
+            # accidentally ask to use or refine the photo result.
             final_status = "ambiguous"
             should_use_photo = False
             should_refine = False
@@ -217,6 +233,8 @@ class AIBasedEvidenceAdjudicator:
 
 
 def create_default_adjudicator() -> EvidenceAdjudicator:
+    """Return an AI adjudicator when enabled, otherwise the no-op fallback."""
+
     config = PhotoAIConfig.from_env()
     if config.enabled:
         return AIBasedEvidenceAdjudicator(config)
@@ -228,6 +246,8 @@ def build_adjudication_prompt(
     current_result: ResolutionResult,
     photo_evidence: PhotoEvidence,
 ) -> str:
+    """Build the prompt that asks the model to reconcile text and photo evidence."""
+
     return f"""You are adjudicating whether photo-derived product evidence plausibly resolves a parsed receipt line item.
 
 The system is JSON-first and text-first. Photo evidence is optional secondary evidence.
@@ -300,6 +320,8 @@ Return only a JSON object with this shape:
 
 
 def _status_or_default(value: Any, default: str) -> AdjudicatedStatus:
+    """Coerce model status output to a supported status value."""
+
     if value in {"resolved", "ambiguous", "insufficient_evidence"}:
         return value
     if default in {"resolved", "ambiguous", "insufficient_evidence"}:
@@ -308,24 +330,32 @@ def _status_or_default(value: Any, default: str) -> AdjudicatedStatus:
 
 
 def _decision_or_default(value: Any) -> AdjudicationDecision:
+    """Coerce model decision output to a supported decision value."""
+
     if value in {"use_photo_result", "refine_existing_result", "remain_ambiguous", "contradiction"}:
         return value
     return "remain_ambiguous"
 
 
 def _contradiction_strength_or_default(value: Any) -> ContradictionStrength:
+    """Coerce contradiction strength output to a supported value."""
+
     if value in {"none", "weak", "strong"}:
         return value
     return "none"
 
 
 def _refinement_strength_or_default(value: Any) -> Literal["none", "weak", "moderate", "strong"]:
+    """Coerce photo-refinement strength output to a supported value."""
+
     if value in {"none", "weak", "moderate", "strong"}:
         return value
     return "none"
 
 
 def _coerce_float(value: Any, default: float) -> float:
+    """Convert model numeric output to a float with a fallback."""
+
     try:
         return float(value)
     except (TypeError, ValueError):
@@ -333,6 +363,8 @@ def _coerce_float(value: Any, default: float) -> float:
 
 
 def _string_or_none(value: Any) -> str | None:
+    """Normalize optional string fields returned by the model."""
+
     if value is None:
         return None
     text = str(value).strip()
@@ -340,6 +372,8 @@ def _string_or_none(value: Any) -> str | None:
 
 
 def _list_of_strings(value: Any) -> list[str]:
+    """Normalize optional list fields returned by the model."""
+
     if not isinstance(value, list):
         return []
     return [str(item).strip() for item in value if str(item).strip()]

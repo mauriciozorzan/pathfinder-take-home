@@ -1,3 +1,10 @@
+"""Command-line entry point and orchestration for the exact-item pipeline.
+
+The heavy lifting lives in smaller modules. This file wires those stages
+together: load datasets, normalize items, resolve them, optionally apply
+receipt-level context, record latency, and write output artifacts.
+"""
+
 from __future__ import annotations
 
 import argparse
@@ -34,6 +41,8 @@ from .ui import write_html_report
 
 
 def build_argument_parser() -> argparse.ArgumentParser:
+    """Define the CLI flags used to run the pipeline from the terminal."""
+
     parser = argparse.ArgumentParser(description="Run the exact item resolver pipeline.")
     parser.add_argument("--photo-anchored", required=True, help="Path to the photo-anchored dataset.")
     parser.add_argument("--unanchored", required=True, help="Path to the unanchored dataset.")
@@ -61,6 +70,8 @@ def load_and_normalize(
     dataset_name: str,
     normalization_timings: dict[tuple[str, int, int], float] | None = None,
 ) -> List[ReceiptItem]:
+    """Load one dataset and attach normalized signals to every receipt item."""
+
     raw_items = load_receipt_items(dataset_path, dataset_name)
     normalized = []
     for item in raw_items:
@@ -73,6 +84,8 @@ def load_and_normalize(
 
 
 def summarize_results(dataset_name: str, items: Sequence[ReceiptItem], results: Sequence[ResolutionResult]) -> str:
+    """Build the per-dataset section of the Markdown summary report."""
+
     route_counts = Counter(result.route for result in results)
     status_counts = Counter(result.status for result in results)
     photo_available_count = sum(result.photo_evidence_available for result in results)
@@ -94,6 +107,8 @@ def summarize_results(dataset_name: str, items: Sequence[ReceiptItem], results: 
     receipt_assignment_used_count = sum(result.receipt_level_assignment_used for result in results)
 
     representative_success = next((result for result in results if result.status == "resolved"), None)
+    # Representative examples make the summary easier to skim than raw counts
+    # alone, especially when comparing abstentions and photo-assisted changes.
     representative_abstain = next(
         (
             result
@@ -161,6 +176,8 @@ def build_summary(
     all_items: Dict[str, Sequence[ReceiptItem]],
     latency_report: dict | None = None,
 ) -> str:
+    """Build the human-readable Markdown report across all datasets."""
+
     status_totals = Counter()
     route_totals = Counter()
     photo_available_total = 0
@@ -179,6 +196,8 @@ def build_summary(
     receipt_assignment_used_total = 0
 
     for dataset_name, results in all_results.items():
+        # Aggregate usage flags across datasets so the summary explains both
+        # quality decisions and the cost/latency shape of the run.
         status_totals.update(result.status for result in results)
         route_totals.update(result.route for result in results)
         photo_available_total += sum(result.photo_evidence_available for result in results)
@@ -282,12 +301,18 @@ def run_pipeline(
     pipeline_mode: str = "full",
     enable_cache: bool = True,
 ) -> Dict[str, List[ResolutionResult]]:
+    """Run the full exact-item resolver and write all output artifacts."""
+
     if pipeline_mode == "local_only":
+        # Local-only mode disables all expensive/model-backed stages so latency
+        # can be compared against the richer modes.
         enable_photo_assist = False
         enable_receipt_context = False
         adjudicator = NoopEvidenceAdjudicator()
         sibling_context_adjudicator = NoopSiblingContextAdjudicator()
     elif pipeline_mode == "photo_ai":
+        # Photo AI mode exercises item-level image evidence while leaving the
+        # broader receipt-context pass disabled.
         enable_photo_assist = True
         enable_receipt_context = False
         sibling_context_adjudicator = NoopSiblingContextAdjudicator()
@@ -301,12 +326,16 @@ def run_pipeline(
     adjudication_cache = None
     shared_photo_cache = None
     if photo_analyzer is None:
+        # Dependencies are injectable for tests; production defaults come from
+        # environment-backed factories.
         photo_analyzer = create_default_photo_analyzer()
     if adjudicator is None:
         adjudicator = create_default_adjudicator()
     if shared_photo_analyzer is None and enable_receipt_context:
         shared_photo_analyzer = create_default_shared_photo_analyzer()
     if enable_cache and photo_analyzer is not None:
+        # Cache wrappers avoid repeating photo/adjudication work for repeated
+        # image URLs or identical adjudication inputs during a single run.
         photo_cache = CachedPhotoAnalyzer(photo_analyzer)
         photo_analyzer = photo_cache
     if enable_cache and adjudicator is not None:
@@ -322,6 +351,8 @@ def run_pipeline(
         enable_photo_assist=enable_photo_assist,
     )
     results = {name: resolver.resolve_batch(items) for name, items in datasets.items()}
+    # Normalization happens before the resolver, so add that timing back onto
+    # each item result before generating reports.
     results = {
         dataset_name: [
             _with_normalization_latency(result, normalization_timings)
@@ -331,6 +362,8 @@ def run_pipeline(
     }
     receipt_metrics: list[ReceiptLatencyMetrics] = []
     if enable_receipt_context:
+        # Receipt context is applied one receipt at a time so sibling and shared
+        # photo evidence cannot leak between unrelated purchases.
         for dataset_name in list(results):
             updated_dataset_results: list[ResolutionResult] = []
             for receipt_index in sorted({item.receipt_index for item in datasets[dataset_name]}):
@@ -366,6 +399,8 @@ def run_pipeline(
                 key=lambda result: (result.receipt_index, result.item_index),
             )
     else:
+        # When receipt context is disabled, still emit receipt-level latency
+        # metrics by summing the item timings within each receipt.
         for dataset_name, dataset_results in results.items():
             for receipt_index in sorted({result.receipt_index for result in dataset_results}):
                 receipt_results = [result for result in dataset_results if result.receipt_index == receipt_index]
@@ -386,6 +421,8 @@ def run_pipeline(
         for dataset_name, dataset_results in results.items()
     }
     cache_stats = {
+        # These counters are intentionally centralized here because the summary,
+        # JSON latency report, and HTML view all consume the same pipeline result.
         "photo_cache_hits": getattr(photo_cache, "cache_hits", 0),
         "photo_external_calls": getattr(photo_cache, "external_api_call_count", 0),
         "adjudication_cache_hits": getattr(adjudication_cache, "cache_hits", 0),
@@ -414,6 +451,8 @@ def _with_normalization_latency(
     result: ResolutionResult,
     normalization_timings: dict[tuple[str, int, int], float],
 ) -> ResolutionResult:
+    """Return a copy of a result with normalization timing included."""
+
     latency = replace(result.latency_metrics)
     latency.normalization_ms = normalization_timings.get(
         (result.dataset_name, result.receipt_index, result.item_index),
@@ -424,6 +463,8 @@ def _with_normalization_latency(
 
 
 def _with_receipt_context_latency(result: ResolutionResult, receipt_context_ms: float) -> ResolutionResult:
+    """Return a copy of a result with its share of receipt-context timing."""
+
     latency = replace(result.latency_metrics)
     latency.receipt_context_ms = round(receipt_context_ms, 2)
     if result.sibling_context_used:
@@ -433,6 +474,8 @@ def _with_receipt_context_latency(result: ResolutionResult, receipt_context_ms: 
 
 
 def _with_usage_flags(result: ResolutionResult) -> ResolutionResult:
+    """Set convenience booleans that describe which expensive paths were used."""
+
     used_photo_ai = result.photo_analysis_attempted and result.photo_analysis_success
     used_adjudication = result.adjudication_attempted
     used_shared_photo = result.shared_photo_used
@@ -464,6 +507,8 @@ def _build_receipt_latency_metric(
     adjudication_cache: CachedEvidenceAdjudicator | None,
     shared_photo_cache: CachedSharedPhotoAnalyzer | None,
 ) -> ReceiptLatencyMetrics:
+    """Summarize item outcomes and expensive-path counts for one receipt."""
+
     return ReceiptLatencyMetrics(
         dataset_name=dataset_name,
         receipt_index=receipt_index,
@@ -486,6 +531,8 @@ def _build_receipt_latency_metric(
 
 
 def main(argv: Iterable[str] | None = None) -> int:
+    """Parse CLI arguments, run the pipeline, and print a short completion note."""
+
     parser = build_argument_parser()
     args = parser.parse_args(list(argv) if argv is not None else None)
 

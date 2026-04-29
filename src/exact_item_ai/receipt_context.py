@@ -1,3 +1,12 @@
+"""Receipt-level context helpers for conservative cross-item reasoning.
+
+Item-level resolution runs first. This module then looks at one receipt at a
+time for three soft signals: catalog-like coherence, sibling item support, and
+shared reference photos. None of those signals invent exact items by themselves;
+they only strengthen or assign candidates when direct evidence is already
+plausible.
+"""
+
 from __future__ import annotations
 
 import base64
@@ -29,6 +38,8 @@ class SiblingContext:
 
 @dataclass(slots=True)
 class VisiblePhotoCandidate:
+    """One visually grounded candidate extracted from a shared receipt photo."""
+
     title: str | None
     description: str | None
     category: str | None
@@ -39,6 +50,8 @@ class VisiblePhotoCandidate:
 
 @dataclass(slots=True)
 class SharedPhotoEvidence:
+    """All candidates extracted from one repeated/shared photo URL."""
+
     photo_url: str
     candidates: list[VisiblePhotoCandidate] = field(default_factory=list)
     success: bool = False
@@ -48,6 +61,8 @@ class SharedPhotoEvidence:
 
 @dataclass(slots=True)
 class ReceiptLevelAssignment:
+    """A proposed assignment from receipt-level evidence back to one item."""
+
     item_index: int
     assigned_candidate_title: str | None
     assigned_description: str | None
@@ -72,6 +87,8 @@ class CatalogReceiptContext:
 
 @dataclass(slots=True)
 class SiblingAdjudicationResult:
+    """Model decision about whether same-receipt siblings support a candidate."""
+
     family_consistent: bool
     sibling_support_strength: str
     should_increase_confidence: bool
@@ -148,6 +165,8 @@ class AIBasedSiblingContextAdjudicator:
     """AI-backed semantic adjudicator for sibling-item context."""
 
     def __init__(self, config: PhotoAIConfig | None = None) -> None:
+        """Create a sibling-context adjudicator from explicit or env config."""
+
         self.config = config if config is not None else PhotoAIConfig.from_env()
         self.analysis_count = 0
 
@@ -157,6 +176,8 @@ class AIBasedSiblingContextAdjudicator:
         current_result: ResolutionResult,
         sibling_context: SiblingContext,
     ) -> SiblingAdjudicationResult:
+        """Ask the model whether sibling context supports the current candidate."""
+
         if not self.config.enabled:
             return self._disabled("PHOTO_AI_ENABLED is not true.")
         if self.config.provider != "openai":
@@ -174,6 +195,8 @@ class AIBasedSiblingContextAdjudicator:
             return self._disabled(f"Sibling-context adjudication failed: {exc!s}")
 
     def _disabled(self, note: str) -> SiblingAdjudicationResult:
+        """Return a no-op sibling result when model-backed context is unavailable."""
+
         return SiblingAdjudicationResult(
             family_consistent=False,
             sibling_support_strength="none",
@@ -191,6 +214,8 @@ class AIBasedSiblingContextAdjudicator:
         current_result: ResolutionResult,
         sibling_context: SiblingContext,
     ) -> dict[str, Any]:
+        """Send current-item and sibling context to the configured model."""
+
         payload = {
             "model": self.config.model,
             "response_format": {"type": "json_object"},
@@ -219,6 +244,8 @@ class AIBasedSiblingContextAdjudicator:
         return json.loads(content)
 
     def _result_from_payload(self, payload: dict[str, Any]) -> SiblingAdjudicationResult:
+        """Validate model JSON into the sibling-context result contract."""
+
         strength = str(payload.get("sibling_support_strength") or "none").lower()
         if strength not in {"none", "weak", "moderate", "strong"}:
             strength = "none"
@@ -239,6 +266,8 @@ class AIBasedSharedPhotoAnalyzer:
     """AI-backed extractor for shared photos containing multiple visible items."""
 
     def __init__(self, config: PhotoAIConfig | None = None) -> None:
+        """Create a shared-photo analyzer from explicit or env config."""
+
         self.config = config if config is not None else PhotoAIConfig.from_env()
         self.analysis_count = 0
 
@@ -247,6 +276,8 @@ class AIBasedSharedPhotoAnalyzer:
         image_source: str,
         receipt_context: Sequence[ReceiptItem],
     ) -> SharedPhotoEvidence:
+        """Extract visible candidates from a photo reused by multiple receipt lines."""
+
         if not self.config.enabled:
             return self._disabled(image_source, "PHOTO_AI_ENABLED is not true.")
         if self.config.provider != "openai":
@@ -272,6 +303,8 @@ class AIBasedSharedPhotoAnalyzer:
             return self._disabled(image_source, f"Shared photo AI provider call failed: {exc!s}")
 
     def _disabled(self, image_source: str, note: str) -> SharedPhotoEvidence:
+        """Return empty shared-photo evidence when AI analysis cannot run."""
+
         return SharedPhotoEvidence(
             photo_url=image_source,
             candidates=[],
@@ -286,6 +319,8 @@ class AIBasedSharedPhotoAnalyzer:
         mime_type: str,
         receipt_context: Sequence[ReceiptItem],
     ) -> dict[str, Any]:
+        """Send a shared photo plus receipt context to the vision model."""
+
         image_b64 = base64.b64encode(image_bytes).decode("ascii")
         data_url = f"data:{mime_type};base64,{image_b64}"
         payload = {
@@ -319,6 +354,8 @@ class AIBasedSharedPhotoAnalyzer:
         return json.loads(content)
 
     def _evidence_from_payload(self, image_source: str, payload: dict[str, Any]) -> SharedPhotoEvidence:
+        """Normalize model-returned visible candidates into shared-photo evidence."""
+
         candidates = []
         for raw_candidate in payload.get("candidates", []):
             if not isinstance(raw_candidate, dict):
@@ -347,6 +384,8 @@ class AIBasedSharedPhotoAnalyzer:
 
 
 def create_default_shared_photo_analyzer() -> SharedPhotoAnalyzer:
+    """Return the AI shared-photo analyzer when enabled, otherwise no-op."""
+
     config = PhotoAIConfig.from_env()
     if config.enabled:
         return AIBasedSharedPhotoAnalyzer(config)
@@ -354,6 +393,8 @@ def create_default_shared_photo_analyzer() -> SharedPhotoAnalyzer:
 
 
 def create_default_sibling_context_adjudicator() -> SiblingContextAdjudicator:
+    """Return the AI sibling adjudicator when enabled, otherwise no-op."""
+
     config = PhotoAIConfig.from_env()
     if config.enabled:
         return AIBasedSiblingContextAdjudicator(config)
@@ -381,6 +422,8 @@ def apply_receipt_level_context(
         grouped_indices[(item.dataset_name, item.receipt_index)].append(index)
 
     for indices in grouped_indices.values():
+        # Process one receipt group at a time to keep context local to the
+        # purchase and avoid cross-receipt contamination.
         receipt_items = [items[index] for index in indices]
         receipt_results = [updated_results[index] for index in indices]
         catalog_context = build_catalog_receipt_context(receipt_items)
@@ -405,6 +448,8 @@ def apply_receipt_level_context(
 
         shared_photo_urls = detect_shared_photo_urls(receipt_items)
         for photo_url in shared_photo_urls:
+            # Shared-photo assignment runs after catalog and sibling context so
+            # it can see the latest item-level and receipt-level state.
             evidence = analyzer.analyze_shared_photo(photo_url, receipt_items)
             if not evidence.success or not evidence.candidates:
                 continue
@@ -430,6 +475,8 @@ def apply_receipt_level_context(
 
 
 def build_catalog_receipt_context(items: Sequence[ReceiptItem]) -> CatalogReceiptContext:
+    """Score whether a receipt behaves like a coherent catalog-style order."""
+
     if not items:
         return CatalogReceiptContext(0.0, 0.0, False, 0.0, 0.0)
 
@@ -480,11 +527,15 @@ def build_catalog_receipt_context(items: Sequence[ReceiptItem]) -> CatalogReceip
 
 
 def compute_merchant_catalog_confidence(items: Sequence[ReceiptItem], merchant: str) -> float:
+    """Compute catalog confidence for only the items belonging to one merchant."""
+
     merchant_items = [item for item in items if item.merchant == merchant]
     return build_catalog_receipt_context(merchant_items).merchant_catalog_confidence
 
 
 def compute_receipt_coherence(items: Sequence[ReceiptItem]) -> float:
+    """Compute the receipt-level coherence score used by tests and reporting."""
+
     return build_catalog_receipt_context(items).receipt_coherence_score
 
 
@@ -493,6 +544,8 @@ def should_promote_to_catalog_deterministic(
     result: ResolutionResult,
     catalog_context: CatalogReceiptContext,
 ) -> bool:
+    """Decide whether catalog coherence can safely promote a named item."""
+
     if not catalog_context.catalog_like_receipt:
         return False
     if result.route != "retrieval_needed":
@@ -511,6 +564,8 @@ def apply_catalog_context_promotion(
     result: ResolutionResult,
     catalog_context: CatalogReceiptContext,
 ) -> ResolutionResult:
+    """Promote a retrieval-needed catalog item when receipt-level evidence is strong."""
+
     if not should_promote_to_catalog_deterministic(item, result, catalog_context):
         return result
 
@@ -559,6 +614,8 @@ def build_sibling_contexts(
     items: Sequence[ReceiptItem],
     results: Sequence[ResolutionResult],
 ) -> dict[int, SiblingContext]:
+    """Build same-receipt context objects for each item."""
+
     contexts: dict[int, SiblingContext] = {}
     for item in items:
         siblings = [other for other in items if other.item_index != item.item_index]
@@ -622,6 +679,8 @@ def apply_sibling_family_context(
     sibling_contexts: dict[int, SiblingContext],
     adjudicator: SiblingContextAdjudicator,
 ) -> list[ResolutionResult]:
+    """Apply model-adjudicated sibling support to ambiguous candidates."""
+
     updated_results = list(results)
     for index, (item, result) in enumerate(zip(items, results)):
         candidate_title, candidate_description, candidate_category = _plausible_candidate_from_result_or_item(item, result)
@@ -655,6 +714,8 @@ def can_promote_with_sibling_context(
     adjudication: SiblingAdjudicationResult,
     candidate_title: str | None,
 ) -> bool:
+    """Return whether sibling context is strong enough to change status to resolved."""
+
     if current_result.status != "ambiguous":
         return False
     if not candidate_title:
@@ -677,6 +738,8 @@ def _can_increase_with_sibling_context(
     adjudication: SiblingAdjudicationResult,
     candidate_title: str | None,
 ) -> bool:
+    """Return whether sibling support can increase confidence without resolving."""
+
     if current_result.status != "ambiguous" or not candidate_title:
         return False
     if item.is_generic_title or item.looks_like_discount_line:
@@ -697,6 +760,8 @@ def fuse_with_sibling_context(
     family_consistent: bool,
     has_plausible_candidate: bool,
 ) -> float:
+    """Blend a bounded sibling-context confidence boost into the current score."""
+
     if not family_consistent or not has_plausible_candidate:
         return current_confidence
     boost = min(0.2, max(0.0, confidence_delta))
@@ -707,6 +772,8 @@ def _apply_sibling_confidence_update(
     result: ResolutionResult,
     adjudication: SiblingAdjudicationResult,
 ) -> ResolutionResult:
+    """Record a sibling-supported confidence increase without changing status."""
+
     updated_confidence = fuse_with_sibling_context(
         result.confidence,
         adjudication.confidence_delta,
@@ -743,6 +810,8 @@ def _apply_sibling_family_promotion(
     adjudication: SiblingAdjudicationResult,
     sibling_context: SiblingContext,
 ) -> ResolutionResult:
+    """Promote an ambiguous result to resolved using strong sibling support."""
+
     updated_confidence = max(
         fuse_with_sibling_context(
             result.confidence,
@@ -792,6 +861,8 @@ def _apply_sibling_family_promotion(
 
 
 def detect_shared_photo_urls(items: Sequence[ReceiptItem]) -> list[str]:
+    """Find reference photos that appear on more than one item in a receipt."""
+
     counts = Counter(
         photo_url
         for item in items
@@ -806,11 +877,15 @@ def assign_visible_candidates_to_receipt_items(
     current_results: Sequence[ResolutionResult],
     shared_photo_evidence: SharedPhotoEvidence,
 ) -> list[ReceiptLevelAssignment]:
+    """Assign shared-photo candidates to receipt lines conservatively."""
+
     assignments: list[ReceiptLevelAssignment] = []
     assigned_candidate_indices: set[int] = set()
     assigned_item_indices: set[int] = set()
 
     for item, result in zip(items, current_results):
+        # First pass: align non-generic receipt lines directly to visible
+        # candidates using token overlap plus the model's candidate confidence.
         if item.is_generic_title:
             continue
         best_index, best_score = _best_candidate_for_item(item, shared_photo_evidence.candidates)
@@ -846,6 +921,8 @@ def assign_visible_candidates_to_receipt_items(
     ]
 
     for item, result in generic_items:
+        # Second pass: a generic line can use exactly one coherent leftover
+        # candidate, avoiding many-to-one or guessed assignments.
         coherent = [
             (index, candidate)
             for index, candidate in leftover_candidates
@@ -880,6 +957,8 @@ def apply_receipt_assignment(
     assignment: ReceiptLevelAssignment,
     shared_photo_evidence: SharedPhotoEvidence,
 ) -> ResolutionResult:
+    """Apply one shared-photo assignment to a result when it passed all gates."""
+
     if not assignment.should_update_result or not assignment.assigned_candidate_title:
         return result
 
@@ -915,6 +994,8 @@ def apply_receipt_assignment(
 
 
 def build_shared_photo_prompt(receipt_context: Sequence[ReceiptItem]) -> str:
+    """Build the prompt for extracting multiple candidates from one photo."""
+
     lines = [
         "This image may contain multiple purchased items from one receipt.",
         "Extract all distinct visible products/items that are visually grounded.",
@@ -956,6 +1037,8 @@ def build_sibling_adjudication_prompt(
     current_result: ResolutionResult,
     sibling_context: SiblingContext,
 ) -> str:
+    """Build the prompt for model-based sibling-context adjudication."""
+
     lines = [
         "You are adjudicating same-receipt sibling context for exact-item resolution.",
         "Use semantic reasoning, not exact keyword overlap.",
@@ -1015,6 +1098,8 @@ def _best_candidate_for_item(
     item: ReceiptItem,
     candidates: Sequence[VisiblePhotoCandidate],
 ) -> tuple[int | None, float]:
+    """Return the shared-photo candidate with the best text/confidence alignment."""
+
     best_index: int | None = None
     best_score = 0.0
     for index, candidate in enumerate(candidates):
@@ -1035,6 +1120,8 @@ def _plausible_candidate_from_result_or_item(
     item: ReceiptItem,
     result: ResolutionResult,
 ) -> tuple[str | None, str | None, str | None]:
+    """Select the candidate that sibling context is allowed to support."""
+
     if result.resolved_title:
         return result.resolved_title, result.resolved_description, result.resolved_entity_type
     if result.photo_model_suggested_title and (result.photo_model_confidence or 0.0) >= 0.75:
@@ -1045,6 +1132,8 @@ def _plausible_candidate_from_result_or_item(
 
 
 def _should_invoke_sibling_adjudication(item: ReceiptItem, result: ResolutionResult) -> bool:
+    """Gate sibling adjudication to ambiguous items that already have a candidate."""
+
     if result.status != "ambiguous":
         return False
     if item.is_generic_title or item.looks_like_discount_line:
@@ -1055,6 +1144,8 @@ def _should_invoke_sibling_adjudication(item: ReceiptItem, result: ResolutionRes
 
 
 def _sibling_adjudication_evidence(adjudication: SiblingAdjudicationResult) -> dict[str, Any]:
+    """Serialize sibling adjudication details into the result evidence payload."""
+
     return {
         "adjudicator": adjudication.adjudicator_name,
         "family_consistent": adjudication.family_consistent,
@@ -1067,6 +1158,8 @@ def _sibling_adjudication_evidence(adjudication: SiblingAdjudicationResult) -> d
 
 
 def _support_strength_score(strength: str) -> float:
+    """Map qualitative sibling support into a numeric reporting score."""
+
     return {
         "none": 0.0,
         "weak": 0.35,
@@ -1084,6 +1177,8 @@ def _candidate_matches_generic_line(candidate: VisiblePhotoCandidate, item: Rece
 
 
 def _is_named_catalog_title(item: ReceiptItem) -> bool:
+    """Return whether a line looks like a named catalog item, not a category."""
+
     if item.is_generic_title or item.looks_like_discount_line:
         return False
     tokens = _tokens(item.cleaned_item_name or item.item_name)
@@ -1093,6 +1188,8 @@ def _is_named_catalog_title(item: ReceiptItem) -> bool:
 
 
 def _has_catalog_education_signal(item: ReceiptItem) -> bool:
+    """Detect broad book/curriculum terms that support catalog coherence."""
+
     title = item.normalized_item_name
     catalog_terms = {
         "answer",
@@ -1116,6 +1213,8 @@ def _has_catalog_education_signal(item: ReceiptItem) -> bool:
 
 
 def _item_id_format_similarity(items: Sequence[ReceiptItem]) -> float:
+    """Measure whether item IDs on a receipt share a common format."""
+
     ids = [item.normalized_item_id or item.item_id for item in items if item.has_item_id]
     if len(ids) < 2:
         return 0.0
@@ -1127,10 +1226,14 @@ def _item_id_format_similarity(items: Sequence[ReceiptItem]) -> float:
 
 
 def _item_id_pattern(item_id: str) -> str:
+    """Reduce an item ID to a letter/digit pattern for format comparison."""
+
     return re.sub(r"\d", "9", re.sub(r"[A-Za-z]", "A", item_id))
 
 
 def _ratio(values: Sequence[bool] | Any) -> float:
+    """Compute the true ratio for an iterable of boolean-like values."""
+
     value_list = list(values)
     if not value_list:
         return 0.0
@@ -1138,6 +1241,8 @@ def _ratio(values: Sequence[bool] | Any) -> float:
 
 
 def _name_pattern(value: str) -> str:
+    """Summarize a title by short/word token shape for sibling context."""
+
     tokens = _tokens(value)
     if not tokens:
         return "empty"
@@ -1145,6 +1250,8 @@ def _name_pattern(value: str) -> str:
 
 
 def _token_overlap(left: str, right: str) -> float:
+    """Compute overlap from the left text into the right text."""
+
     left_tokens = set(_tokens(left))
     right_tokens = set(_tokens(right))
     if not left_tokens or not right_tokens:
@@ -1153,14 +1260,20 @@ def _token_overlap(left: str, right: str) -> float:
 
 
 def _tokens(value: str) -> list[str]:
+    """Tokenize product text for lightweight matching."""
+
     return [token for token in re.findall(r"[a-z0-9]+", value.lower()) if len(token) > 1]
 
 
 def _digits(value: str | None) -> str:
+    """Extract all digits from an optional item ID string."""
+
     return "".join(re.findall(r"\d+", value or ""))
 
 
 def _coerce_float(value: Any, default: float) -> float:
+    """Convert arbitrary model output into a float with a fallback."""
+
     try:
         return float(value)
     except (TypeError, ValueError):
@@ -1168,6 +1281,8 @@ def _coerce_float(value: Any, default: float) -> float:
 
 
 def _string_or_none(value: Any) -> str | None:
+    """Normalize optional model text fields."""
+
     if value is None:
         return None
     text = str(value).strip()
@@ -1175,6 +1290,8 @@ def _string_or_none(value: Any) -> str | None:
 
 
 def _list_of_strings(value: Any) -> list[str]:
+    """Normalize optional model list fields."""
+
     if not isinstance(value, list):
         return []
     return [str(item).strip() for item in value if str(item).strip()]

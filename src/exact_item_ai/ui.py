@@ -1,3 +1,5 @@
+"""Lightweight HTML viewer for generated prediction outputs."""
+
 from __future__ import annotations
 
 import argparse
@@ -10,6 +12,8 @@ from .models import ResolutionResult
 
 
 def build_html_report(all_results: Dict[str, Sequence[ResolutionResult]]) -> str:
+    """Render all prediction results into a filterable, sortable HTML table."""
+
     rows = []
     for dataset_name, results in sorted(all_results.items()):
         for result in results:
@@ -194,6 +198,8 @@ def build_html_report(all_results: Dict[str, Sequence[ResolutionResult]]) -> str
   </table>
 
   <script>
+    // The viewer is intentionally dependency-free so it can be opened from the
+    // generated output folder without a build step or frontend framework.
     const search = document.getElementById("search");
     const dataset = document.getElementById("dataset");
     const status = document.getElementById("status");
@@ -202,17 +208,19 @@ def build_html_report(all_results: Dict[str, Sequence[ResolutionResult]]) -> str
     const tbody = table.querySelector("tbody");
     const rows = Array.from(tbody.querySelectorAll("tr"));
     const headers = Array.from(table.querySelectorAll("thead th"));
-    const rowData = rows.map((row, index) => ({
+    const rowData = rows.map((row, index) => ({{
       row,
       index,
       cells: Array.from(row.querySelectorAll("td")).map((cell) => cell.textContent.trim()),
-    }));
+    }}));
     const blankToken = "__BLANK__";
     const columnFilters = new Map();
     let sortColumnIndex = null;
     let sortDirection = "";
 
     function isNumeric(value) {{
+      // Sorting should treat latency/confidence columns numerically and all
+      // other columns lexicographically.
       return value !== "" && !Number.isNaN(Number(value));
     }}
 
@@ -231,6 +239,8 @@ def build_html_report(all_results: Dict[str, Sequence[ResolutionResult]]) -> str
     }}
 
     function buildColumnControls() {{
+      // Each table header receives its own sort and filter controls, populated
+      // from the values already present in that column.
       for (const [index, header] of headers.entries()) {{
         const labelText = header.textContent.trim();
         header.textContent = "";
@@ -244,7 +254,7 @@ def build_html_report(all_results: Dict[str, Sequence[ResolutionResult]]) -> str
 
         const sortSelect = document.createElement("select");
         sortSelect.className = "th-select";
-        sortSelect.title = `Sort ${labelText}`;
+        sortSelect.title = `Sort ${{labelText}}`;
         sortSelect.appendChild(createOption("", "Sort"));
         sortSelect.appendChild(createOption("asc", "Sort A-Z / low-high"));
         sortSelect.appendChild(createOption("desc", "Sort Z-A / high-low"));
@@ -268,7 +278,7 @@ def build_html_report(all_results: Dict[str, Sequence[ResolutionResult]]) -> str
 
         const filterSelect = document.createElement("select");
         filterSelect.className = "th-select";
-        filterSelect.title = `Filter ${labelText}`;
+        filterSelect.title = `Filter ${{labelText}}`;
         filterSelect.appendChild(createOption("", "All values"));
 
         const values = Array.from(
@@ -298,6 +308,8 @@ def build_html_report(all_results: Dict[str, Sequence[ResolutionResult]]) -> str
     }}
 
     function applyFilters() {{
+      // Filtering is performed against the cached row text, then matching rows
+      // are reattached in the current sort order.
       const searchText = search.value.toLowerCase();
       const visible = [];
       const hidden = [];
@@ -372,6 +384,8 @@ def build_html_report(all_results: Dict[str, Sequence[ResolutionResult]]) -> str
 
 
 def write_html_report(output_path: str | Path, all_results: Dict[str, Sequence[ResolutionResult]]) -> Path:
+    """Write the standalone HTML report to the output directory."""
+
     path = Path(output_path)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(build_html_report(all_results))
@@ -379,6 +393,8 @@ def write_html_report(output_path: str | Path, all_results: Dict[str, Sequence[R
 
 
 def serve_output_directory(directory: str | Path, port: int = 8000) -> None:
+    """Serve an output directory locally so the HTML report can be reviewed."""
+
     path = Path(directory)
     handler = lambda *args, **kwargs: SimpleHTTPRequestHandler(  # noqa: E731
         *args, directory=str(path), **kwargs
@@ -394,6 +410,8 @@ def serve_output_directory(directory: str | Path, port: int = 8000) -> None:
 
 
 def main(argv: Iterable[str] | None = None) -> int:
+    """Parse CLI flags and serve the generated output viewer."""
+
     parser = argparse.ArgumentParser(description="Serve the generated output viewer.")
     parser.add_argument("--output-dir", default="output")
     parser.add_argument("--port", type=int, default=8000)

@@ -1,3 +1,5 @@
+"""Confidence and evidence helpers shared by resolution stages."""
+
 from __future__ import annotations
 
 from typing import Any, Dict
@@ -6,6 +8,8 @@ from .models import ReceiptItem
 
 
 def clamp_confidence(value: float) -> float:
+    """Keep confidence scores inside the project-wide 0.00 to 0.99 range."""
+
     return round(max(0.0, min(0.99, value)), 2)
 
 
@@ -19,6 +23,8 @@ def build_evidence(
     used_merchant: bool = False,
     candidate_basis: str | None = None,
 ) -> Dict[str, Any]:
+    """Build the compact evidence dictionary attached to every result."""
+
     return {
         "used_item_id": used_item_id,
         "used_title_match": used_title_match,
@@ -31,6 +37,8 @@ def build_evidence(
 
 
 def deterministic_confidence(item: ReceiptItem, *, uses_item_id: bool) -> float:
+    """Score a locally resolved item based on title specificity and ID strength."""
+
     score = 0.58
     if uses_item_id:
         score += 0.18
@@ -48,6 +56,8 @@ def deterministic_confidence(item: ReceiptItem, *, uses_item_id: bool) -> float:
 
 
 def ambiguous_confidence(item: ReceiptItem) -> float:
+    """Score items with some useful evidence but no confident exact match."""
+
     score = 0.34 + (item.specificity_score * 0.18)
     if item.has_item_id and item.id_type in {"short_sku", "catalog_code", "barcode"}:
         score += 0.05
@@ -55,6 +65,8 @@ def ambiguous_confidence(item: ReceiptItem) -> float:
 
 
 def insufficient_confidence(item: ReceiptItem) -> float:
+    """Score abstentions where available evidence is too weak to identify an item."""
+
     score = 0.12
     if item.has_reference_photo:
         score += 0.06
@@ -64,4 +76,6 @@ def insufficient_confidence(item: ReceiptItem) -> float:
 
 
 def apply_confidence_delta(base_confidence: float, delta: float) -> float:
+    """Apply an evidence-driven confidence adjustment with normal clamping."""
+
     return clamp_confidence(base_confidence + delta)

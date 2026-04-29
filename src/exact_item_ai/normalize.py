@@ -1,3 +1,10 @@
+"""Normalize raw receipt text into conservative local signals.
+
+This module deliberately performs broad cleanup and signal extraction only. It
+does not encode product-specific mappings; later resolver stages decide how much
+confidence to assign to the normalized merchant, title, ID, and condition.
+"""
+
 from __future__ import annotations
 
 import re
@@ -43,6 +50,8 @@ METADATA_PARENTHETICAL_RE = re.compile(
 
 
 def parse_price(raw_value: object) -> Optional[float]:
+    """Convert common receipt price values into floats when possible."""
+
     if raw_value in (None, ""):
         return None
     if isinstance(raw_value, (int, float)):
@@ -56,6 +65,8 @@ def parse_price(raw_value: object) -> Optional[float]:
 
 
 def canonicalize_text(text: str) -> str:
+    """Lowercase and simplify text so heuristic comparisons are stable."""
+
     lowered = text.lower().strip().replace("&", " and ")
     lowered = lowered.replace("™", " ").replace("®", " ")
     lowered = NON_ALNUM_RE.sub(" ", lowered)
@@ -63,11 +74,15 @@ def canonicalize_text(text: str) -> str:
 
 
 def normalize_merchant(merchant: str) -> str:
+    """Apply obvious merchant aliases after generic text canonicalization."""
+
     normalized = canonicalize_text(merchant)
     return MERCHANT_ALIASES.get(normalized, normalized)
 
 
 def _merchant_normalization_note(merchant: str, normalized_merchant: str) -> Optional[str]:
+    """Return a trace note when alias normalization changed the merchant name."""
+
     normalized = canonicalize_text(merchant)
     if normalized != normalized_merchant:
         return f"normalized merchant alias: {normalized} -> {normalized_merchant}"
@@ -75,6 +90,8 @@ def _merchant_normalization_note(merchant: str, normalized_merchant: str) -> Opt
 
 
 def normalize_item_id(item_id: Optional[str]) -> Optional[str]:
+    """Remove whitespace from item IDs while preserving the original shape."""
+
     if not item_id:
         return None
     cleaned = re.sub(r"\s+", "", str(item_id).strip())
@@ -82,6 +99,8 @@ def normalize_item_id(item_id: Optional[str]) -> Optional[str]:
 
 
 def classify_item_id(item_id: Optional[str]) -> Optional[str]:
+    """Classify item IDs by general format, not by product-specific lookup."""
+
     if not item_id:
         return None
     if re.fullmatch(r"97[89]\d{10}", item_id):
@@ -98,11 +117,15 @@ def classify_item_id(item_id: Optional[str]) -> Optional[str]:
 
 
 def extract_condition_metadata(item_name: str) -> tuple[str, Optional[str]]:
+    """Return the title with resale condition suffixes separated out."""
+
     cleaned, condition, _notes = _extract_title_metadata(item_name)
     return cleaned, condition
 
 
 def _extract_title_metadata(item_name: str) -> tuple[str, Optional[str], list[str]]:
+    """Strip non-identity metadata while recording exactly what changed."""
+
     cleaned = item_name.strip()
     notes: list[str] = []
     condition_match = CONDITION_SUFFIX_RE.search(cleaned)
@@ -117,9 +140,13 @@ def _extract_title_metadata(item_name: str) -> tuple[str, Optional[str], list[st
 
 
 def strip_metadata_parentheticals(item_name: str) -> tuple[str, list[str]]:
+    """Remove fulfillment-style parentheticals but keep identity descriptors."""
+
     notes: list[str] = []
 
     def replace_parenthetical(match: re.Match[str]) -> str:
+        # Parentheticals can be either shipping metadata or real product identity,
+        # so only remove phrases that match explicit operational metadata terms.
         content = match.group(1).strip()
         if METADATA_PARENTHETICAL_RE.search(content):
             notes.append(f"stripped metadata parenthetical: {content}")
@@ -132,19 +159,27 @@ def strip_metadata_parentheticals(item_name: str) -> tuple[str, list[str]]:
 
 
 def clean_item_name(item_name: str) -> str:
+    """Return just the identity-bearing title portion of a receipt line."""
+
     cleaned, _condition = extract_condition_metadata(item_name)
     return cleaned
 
 
 def _format_condition(condition: str) -> str:
+    """Format extracted resale condition text for display."""
+
     return " ".join(part.capitalize() for part in condition.lower().split())
 
 
 def detect_discount_line(item_name: str) -> bool:
+    """Detect lines that look like pricing/discount summaries, not products."""
+
     return bool(DISCOUNT_HINT_RE.search(item_name))
 
 
 def is_generic_title(item_name: str) -> bool:
+    """Flag titles that are category-level and weak for exact identification."""
+
     normalized = canonicalize_text(item_name)
     if not normalized:
         return True
@@ -158,6 +193,8 @@ def is_generic_title(item_name: str) -> bool:
 
 
 def compute_specificity_score(item_name: str) -> float:
+    """Estimate how much identity-bearing information appears in the title."""
+
     normalized = canonicalize_text(item_name)
     if not normalized:
         return 0.0
@@ -172,6 +209,8 @@ def compute_specificity_score(item_name: str) -> float:
 
 
 def normalize_receipt_item(item: ReceiptItem) -> ReceiptItem:
+    """Attach normalized fields and lightweight local signals to a receipt item."""
+
     cleaned_item_name, item_condition, normalization_notes = _extract_title_metadata(item.item_name)
     normalized_item_name = canonicalize_text(cleaned_item_name)
     normalized_merchant = normalize_merchant(item.merchant)

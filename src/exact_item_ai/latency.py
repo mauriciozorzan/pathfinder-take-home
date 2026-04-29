@@ -1,3 +1,5 @@
+"""Latency measurement, caching wrappers, and latency-report generation."""
+
 from __future__ import annotations
 
 import json
@@ -14,10 +16,14 @@ from .receipt_context import SharedPhotoAnalyzer, SharedPhotoEvidence
 
 
 def elapsed_ms(start: float) -> float:
+    """Return elapsed wall-clock milliseconds since a perf_counter start time."""
+
     return round((time.perf_counter() - start) * 1000, 2)
 
 
 def percentile(values: Sequence[float], percent: float) -> float:
+    """Compute a simple nearest-rank percentile for report-friendly timings."""
+
     clean = sorted(value for value in values if value is not None)
     if not clean:
         return 0.0
@@ -26,6 +32,8 @@ def percentile(values: Sequence[float], percent: float) -> float:
 
 
 def latency_stats(values: Sequence[float]) -> dict[str, float]:
+    """Return average, median, p95, and max timing statistics."""
+
     clean = [value for value in values if value is not None]
     if not clean:
         return {"avg_ms": 0.0, "median_ms": 0.0, "p95_ms": 0.0, "max_ms": 0.0}
@@ -38,7 +46,11 @@ def latency_stats(values: Sequence[float]) -> dict[str, float]:
 
 
 class CachedPhotoAnalyzer:
+    """In-memory cache for item-level photo analysis keyed by image source."""
+
     def __init__(self, delegate: PhotoAnalyzer) -> None:
+        """Wrap a photo analyzer and expose cache/call counters for reports."""
+
         self.delegate = delegate
         self.cache: dict[str, PhotoEvidence] = {}
         self.cache_hits = 0
@@ -48,6 +60,8 @@ class CachedPhotoAnalyzer:
         self.last_photo_model_ms = 0.0
 
     def analyze(self, image_source: str, item_context: ReceiptItem) -> PhotoEvidence:
+        """Return cached photo evidence or delegate to the wrapped analyzer."""
+
         if image_source in self.cache:
             self.cache_hits += 1
             self.last_cache_hit = True
@@ -66,7 +80,11 @@ class CachedPhotoAnalyzer:
 
 
 class CachedEvidenceAdjudicator:
+    """In-memory cache for repeated adjudication inputs."""
+
     def __init__(self, delegate: EvidenceAdjudicator) -> None:
+        """Wrap an adjudicator and expose cache/call counters for reports."""
+
         self.delegate = delegate
         self.cache: dict[str, AdjudicationResult] = {}
         self.cache_hits = 0
@@ -79,7 +97,11 @@ class CachedEvidenceAdjudicator:
         current_result: ResolutionResult,
         photo_evidence: PhotoEvidence,
     ) -> AdjudicationResult:
+        """Return cached adjudication output or run the wrapped adjudicator."""
+
         key = json.dumps(
+            # The cache key includes the stable item identity plus current result
+            # and photo candidate fields that can affect adjudication.
             {
                 "dataset": item_context.dataset_name,
                 "receipt": item_context.receipt_index,
@@ -105,7 +127,11 @@ class CachedEvidenceAdjudicator:
 
 
 class CachedSharedPhotoAnalyzer:
+    """In-memory cache for receipt-level shared-photo analysis."""
+
     def __init__(self, delegate: SharedPhotoAnalyzer) -> None:
+        """Wrap a shared-photo analyzer and expose cache/call counters."""
+
         self.delegate = delegate
         self.cache: dict[str, SharedPhotoEvidence] = {}
         self.cache_hits = 0
@@ -117,6 +143,8 @@ class CachedSharedPhotoAnalyzer:
         image_source: str,
         receipt_context: Sequence[ReceiptItem],
     ) -> SharedPhotoEvidence:
+        """Return cached shared-photo evidence or delegate to the analyzer."""
+
         if image_source in self.cache:
             self.cache_hits += 1
             self.last_cache_hit = True
@@ -135,6 +163,8 @@ def build_latency_report(
     pipeline_mode: str,
     cache_stats: dict[str, int],
 ) -> dict[str, Any]:
+    """Build the structured JSON latency report consumed by summaries and review."""
+
     all_items = [result for results in all_results.values() for result in results]
     item_totals = [result.latency_metrics.total_item_ms for result in all_items]
     receipt_totals = [metric.total_receipt_ms for metric in receipt_metrics]
@@ -183,6 +213,8 @@ def build_latency_report(
 
 
 def write_latency_report(path: str | Path, report: dict[str, Any]) -> Path:
+    """Write the latency report JSON to disk."""
+
     output_path = Path(path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(report, indent=2))
